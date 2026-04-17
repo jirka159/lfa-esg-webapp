@@ -13,16 +13,16 @@ export default function PlannerPage() {
           <div>
             <span className="eyebrow">lfa.jirkovo.app</span>
             <h1>LFA ESG Planner</h1>
-            <p className="muted">Simple MVP dashboard for selecting and sequencing ESG initiatives.</p>
+            <p className="muted">Jednoduchý MVP dashboard pro výběr a řazení ESG iniciativ.</p>
           </div>
 
           <div className="topBarMeta">
             <div className="metricCard">
-              <span>Planned</span>
+              <span>V plánu</span>
               <strong>{plannedCount}</strong>
             </div>
             <div className="metricCard">
-              <span>Catalog</span>
+              <span>Katalog</span>
               <strong>{catalogCount}</strong>
             </div>
           </div>
@@ -30,14 +30,14 @@ export default function PlannerPage() {
 
         <section className="summaryStrip">
           <div className="summaryCard">
-            <span className="eyebrow">Current focus</span>
-            <h3>Q2–Q3 2026 ESG roadmap</h3>
-            <p>Use drag & drop or action buttons to move initiatives between the catalog and planned roadmap.</p>
+            <span className="eyebrow">Aktuální fokus</span>
+            <h3>ESG roadmapa Q2–Q3 2026</h3>
+            <p>Přesouvejte iniciativy mezi katalogem a plánovanou roadmapou pomocí drag &amp; drop nebo akčních tlačítek.</p>
           </div>
           <div className="summaryCard">
-            <span className="eyebrow">Data mode</span>
-            <h3>Local seeded dataset</h3>
-            <p>Prepared for fast MVP delivery. Google Sheet connection can be added in the next iteration.</p>
+            <span className="eyebrow">Režim dat</span>
+            <h3>Lokální připravený dataset</h3>
+            <p>Připraveno pro rychlé doručení MVP. Napojení na Google Sheet lze doplnit v další iteraci.</p>
           </div>
         </section>
 

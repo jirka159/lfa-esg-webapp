@@ -74,10 +74,10 @@ export function PlannerBoard({ initialActivities }: Props) {
     <>
       <div className="boardActions" style={{ display: 'flex', gap: 12, marginBottom: 18, justifyContent: 'flex-end' }}>
         <button className="secondaryButton" type="button" onClick={resetBoard}>
-          Reset board
+          Resetovat plán
         </button>
         <button className="secondaryButton" type="button" onClick={handleLogout}>
-          Log out
+          Odhlásit se
         </button>
       </div>
 
@@ -88,10 +88,10 @@ export function PlannerBoard({ initialActivities }: Props) {
         >
           <div className="panelHeader">
             <div>
-              <span className="eyebrow">Planned activities</span>
-              <h2>MVP roadmap</h2>
+              <span className="eyebrow">Plánované aktivity</span>
+              <h2>MVP roadmapa</h2>
             </div>
-            <div className="panelStat">{plannedItems.length} active</div>
+            <div className="panelStat">{plannedItems.length} aktivních</div>
           </div>
           <div className="panelGrid">
             {plannedItems.map((activity) => (
@@ -99,7 +99,7 @@ export function PlannerBoard({ initialActivities }: Props) {
                 key={activity.id}
                 activity={activity}
                 onMove={(id) => moveItem(id, 'catalog')}
-                actionLabel="Move back to catalog"
+                actionLabel="Přesunout zpět do katalogu"
               />
             ))}
           </div>
@@ -108,10 +108,10 @@ export function PlannerBoard({ initialActivities }: Props) {
         <section className={`panel ${activeZone === 'catalog' ? 'panelActive' : ''}`} {...zoneProps('catalog')}>
           <div className="panelHeader">
             <div>
-              <span className="eyebrow">ESG activity catalog</span>
-              <h2>Candidate initiatives</h2>
+              <span className="eyebrow">Katalog ESG aktivit</span>
+              <h2>Kandidátní iniciativy</h2>
             </div>
-            <div className="panelStat">{catalogItems.length} available</div>
+            <div className="panelStat">{catalogItems.length} dostupných</div>
           </div>
           <div className="panelGrid">
             {catalogItems.map((activity) => (
@@ -119,7 +119,7 @@ export function PlannerBoard({ initialActivities }: Props) {
                 key={activity.id}
                 activity={activity}
                 onMove={(id) => moveItem(id, 'planned')}
-                actionLabel="Add to plan"
+                actionLabel="Přidat do plánu"
               />
             ))}
           </div>

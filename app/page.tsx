@@ -4,14 +4,14 @@ export default function HomePage() {
   return (
     <main className="loginPage">
       <section className="loginHero">
-        <span className="eyebrow">ESG planning workspace</span>
+        <span className="eyebrow">Pracovní prostor pro ESG plánování</span>
         <h2>LFA ESG Planner MVP</h2>
         <p>
-          Static MVP hosted under lfa.jirkovo.app. Continue to the login screen to open the planner.
+          Statické MVP nasazené pod lfa.jirkovo.app. Pokračujte na přihlašovací obrazovku a otevřete plánovač.
         </p>
         <div style={{ marginTop: 20 }}>
           <Link className="primaryButton" href="/login">
-            Open login
+            Otevřít přihlášení
           </Link>
         </div>
       </section>

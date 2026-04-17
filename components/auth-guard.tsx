@@ -25,7 +25,7 @@ export function AuthGuard({ children }: Props) {
   }, [pathname, router]);
 
   if (!ready) {
-    return <main className="loginPage"><section className="loginCard"><p>Loading…</p></section></main>;
+    return <main className="loginPage"><section className="loginCard"><p>Načítání…</p></section></main>;
   }
 
   if (!authenticated) {

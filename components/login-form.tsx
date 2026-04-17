@@ -19,7 +19,7 @@ export function LoginForm() {
     const ok = loginWithCredentials(username, password);
 
     if (!ok) {
-      setError('Wrong username or password');
+      setError('Nesprávné uživatelské jméno nebo heslo');
       setLoading(false);
       return;
     }
@@ -35,18 +35,18 @@ export function LoginForm() {
   return (
     <form className="loginCard" onSubmit={handleSubmit}>
       <div>
-        <span className="eyebrow">LFA ESG planner</span>
-        <h1>Sign in</h1>
-        <p className="muted">MVP access for internal planning. Use the predefined admin credentials.</p>
+        <span className="eyebrow">LFA ESG plánovač</span>
+        <h1>Přihlášení</h1>
+        <p className="muted">MVP přístup pro interní plánování. Použijte předpřipravené administrátorské údaje.</p>
       </div>
 
       <label className="field">
-        <span>Username</span>
+        <span>Uživatelské jméno</span>
         <input value={username} onChange={(event) => setUsername(event.target.value)} />
       </label>
 
       <label className="field">
-        <span>Password</span>
+        <span>Heslo</span>
         <input
           type="password"
           value={password}
@@ -57,11 +57,11 @@ export function LoginForm() {
       {error ? <div className="errorBox">{error}</div> : null}
 
       <button className="primaryButton" disabled={loading} type="submit">
-        {loading ? 'Signing in…' : 'Enter planner'}
+        {loading ? 'Přihlašování…' : 'Vstoupit do plánovače'}
       </button>
 
       <div className="loginHint">
-        <strong>MVP demo login:</strong> LFA Admin / heslo
+        <strong>Demo přihlášení pro MVP:</strong> LFA Admin / heslo
       </div>
     </form>
   );

@@ -4,11 +4,11 @@ export default function LoginPage() {
   return (
     <main className="loginPage">
       <section className="loginHero">
-        <span className="eyebrow">ESG planning workspace</span>
-        <h2>Plan, prioritise and move activities into the roadmap.</h2>
+        <span className="eyebrow">Pracovní prostor pro ESG plánování</span>
+        <h2>Plánujte, prioritizujte a přesouvejte aktivity do roadmapy.</h2>
         <p>
-          First MVP for LFA: simple login, planner dashboard, seeded ESG catalog and drag & drop
-          between catalog and planned initiatives.
+          První MVP pro LFA: jednoduché přihlášení, dashboard plánovače, připravený ESG katalog a drag &amp; drop
+          mezi katalogem a plánovanými iniciativami.
         </p>
       </section>
       <LoginForm />

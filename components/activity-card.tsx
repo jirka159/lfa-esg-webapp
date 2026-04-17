@@ -34,10 +34,10 @@ export function ActivityCard({ activity, onMove, actionLabel }: Props) {
       <p>{activity.description}</p>
       <div className="activityFooter">
         <div>
-          <strong>Owner:</strong> {activity.owner}
+          <strong>Vlastník:</strong> {activity.owner}
         </div>
         <div>
-          <strong>Due:</strong> {activity.dueDate}
+          <strong>Termín:</strong> {activity.dueDate}
         </div>
       </div>
       <div className="impactBox">{activity.impact}</div>
