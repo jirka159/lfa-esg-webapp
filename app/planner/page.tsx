@@ -10,7 +10,7 @@ export default function PlannerPage() {
           <div className="brandHeroInner">
             <div className="brandCopy">
               <span className="eyebrow">Ligová fotbalová asociace</span>
-              <h1>LFA ESG Roadmap 2026–2030</h1>
+              <h1>Katalog ESG projektů</h1>
               <p className="muted">
                 Strategický plánovač projektů s časovou osou, drag &amp; drop roky 2026–2030 a katalogem opatření
                 převzatým z podkladového ESG katalogu.
