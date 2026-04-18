@@ -412,27 +412,27 @@ select {
 .timelineSection::after {
   content: "";
   position: absolute;
-  right: -28px;
-  top: -10px;
-  width: 360px;
-  height: 360px;
+  right: -220px;
+  top: -140px;
+  width: 760px;
+  height: 760px;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cg fill='none' stroke='%231d2241' stroke-width='1.6' opacity='0.16'%3E%3Ccircle cx='100' cy='100' r='78'/%3E%3Cpath d='M100 48 120 62 113 86H87L80 62 100 48Z'/%3E%3Cpath d='M80 62 57 69 49 94 67 112 87 86'/%3E%3Cpath d='M120 62 143 69 151 94 133 112 113 86'/%3E%3Cpath d='M67 112 74 138 100 152 126 138 133 112'/%3E%3Cpath d='M49 94 46 121 64 144 74 138 67 112 49 94Z'/%3E%3Cpath d='M151 94 154 121 136 144 126 138 133 112 151 94Z'/%3E%3Cpath d='M100 152 100 178M57 69 35 57M143 69 165 57M64 144 49 164M136 144 151 164'/%3E%3C/g%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-size: contain;
   background-position: center;
-  opacity: 0.42;
+  opacity: 0.18;
   pointer-events: none;
 }
 
 .timelineSection::before {
   content: "";
   position: absolute;
-  right: 40px;
-  top: 54px;
-  width: 210px;
-  height: 210px;
+  right: -40px;
+  top: 20px;
+  width: 420px;
+  height: 420px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.38), rgba(255, 255, 255, 0));
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.26), rgba(255, 255, 255, 0));
   pointer-events: none;
 }
 
