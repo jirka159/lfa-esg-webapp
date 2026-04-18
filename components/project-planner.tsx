@@ -34,28 +34,10 @@ const TYPE_CLASS: Record<LFAProjectType, string> = {
   S: 'typeS'
 };
 
-const STATUS_LABEL = {
-  hotovo: 'hotovo',
-  probiha: 'probíhá',
-  plan: 'naplánováno'
-} as const;
-
-const TIME_LABEL = {
-  S: 'Krátkodobé (< 6 měsíců)',
-  M: 'Střednědobé (6–12 měsíců)',
-  L: 'Dlouhodobé (12+ měsíců)'
-} as const;
-
 function createInitialPlan(): PlannerState {
   return Object.fromEntries(
     YEARS.map((year) => [year, { L: null, M: null, S1: null, S2: null }])
   ) as PlannerState;
-}
-
-function scoreLabel(score: number) {
-  if (score >= 4) return 'Vysoká';
-  if (score >= 3) return 'Střední';
-  return 'Nižší';
 }
 
 export function ProjectPlanner({ projects, categories }: Props) {
@@ -123,8 +105,6 @@ export function ProjectPlanner({ projects, categories }: Props) {
     }
     return groups;
   }, [activeCategory, filteredProjects, query]);
-
-  const selectedProject = selectedId ? projectMap[selectedId] : undefined;
 
   function handleDrop(year: (typeof YEARS)[number], slotKey: SlotKey) {
     if (!draggedId) return;
@@ -333,81 +313,6 @@ export function ProjectPlanner({ projects, categories }: Props) {
               : filteredProjects.map((project) => renderProjectChip(project))}
           </div>
         </section>
-
-        <aside className="detailPanel panelShell">
-          <div className="sectionHeading">
-            <div>
-              <span className="eyebrow">Detail projektu</span>
-              <h2>{selectedProject ? selectedProject.name : 'Vyber projekt'}</h2>
-            </div>
-            {selectedProject ? <div className={`detailBadge ${TYPE_CLASS[selectedProject.type]}`}>{TYPE_LABEL[selectedProject.type]}</div> : null}
-          </div>
-
-          {selectedProject ? (
-            <div className="detailContent">
-              <div className="detailMetaRow">
-                <span>{selectedProject.id}</span>
-                <span>{categoryMap[selectedProject.cat]}</span>
-                <span>{TIME_LABEL[selectedProject.cas]}</span>
-              </div>
-
-              <div className="detailIntro">
-                <p>{selectedProject.popis}</p>
-              </div>
-
-              <div className="detailMetrics">
-                <div className="metricTile">
-                  <span>Dopad</span>
-                  <strong>{selectedProject.dopad.toFixed(2)}</strong>
-                </div>
-                <div className="metricTile">
-                  <span>Náročnost</span>
-                  <strong>{scoreLabel(selectedProject.narocnost)}</strong>
-                </div>
-                <div className="metricTile">
-                  <span>Lidé</span>
-                  <strong>{selectedProject.lide ?? '—'}</strong>
-                </div>
-              </div>
-
-              <div className="detailBlock">
-                <span className="detailLabel">Owner / realizace</span>
-                <p>{selectedProject.owner || 'Bude doplněno'}</p>
-              </div>
-
-              <div className="detailBlock">
-                <span className="detailLabel">Navrhované KPI</span>
-                <p>{selectedProject.kpi || 'Bude doplněno v dalším kroku.'}</p>
-              </div>
-
-              <div className="detailBlock">
-                <span className="detailLabel">Zdroj inspirace</span>
-                <p>{selectedProject.zdroj || 'Katalog LFA'}</p>
-              </div>
-
-              <div className="detailBlock">
-                <span className="detailLabel">Rozpad aktivit</span>
-                {selectedProject.aktivity?.length ? (
-                  <div className="activityChecklist">
-                    {selectedProject.aktivity.map((activity) => (
-                      <div className="activityChecklistItem" key={activity.name}>
-                        <span className={`checkDot ${activity.status}`}></span>
-                        <div>
-                          <strong>{activity.name}</strong>
-                          <small>{STATUS_LABEL[activity.status]}</small>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p>Zde v kroku 2 doplníme plný detail projektu a rozpad implementace.</p>
-                )}
-              </div>
-            </div>
-          ) : (
-            <div className="emptyDetail">Kliknutím na projekt v katalogu nebo na časové ose zobrazíš jeho detail.</div>
-          )}
-        </aside>
       </section>
     </>
   );
