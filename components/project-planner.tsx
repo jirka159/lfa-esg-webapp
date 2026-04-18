@@ -7,10 +7,10 @@ import { LFAProject, LFAProjectCategory, LFAProjectType } from '@/lib/types';
 const YEARS = [2026, 2027, 2028, 2029, 2030] as const;
 const STORAGE_KEY = 'lfa-esg-roadmap-v2';
 const SLOT_DEFS = [
-  { key: 'L', label: 'Komplexní priorita', type: 'L' as const },
-  { key: 'M', label: 'Střední projekt', type: 'M' as const },
-  { key: 'S1', label: 'Quick win 1', type: 'S' as const },
-  { key: 'S2', label: 'Quick win 2', type: 'S' as const }
+  { key: 'L', label: 'Komplex', type: 'L' as const },
+  { key: 'M', label: 'Standard', type: 'M' as const },
+  { key: 'S1', label: 'Easy win 1', type: 'S' as const },
+  { key: 'S2', label: 'Easy win 2', type: 'S' as const }
 ] as const;
 
 type SlotKey = (typeof SLOT_DEFS)[number]['key'];
@@ -23,8 +23,8 @@ type Props = {
 };
 
 const TYPE_LABEL: Record<LFAProjectType, string> = {
-  L: 'Komplexní',
-  M: 'Middle',
+  L: 'Komplex',
+  M: 'Standard',
   S: 'Easy win'
 };
 
@@ -208,9 +208,9 @@ export function ProjectPlanner({ projects, categories }: Props) {
         <div className="roadmapLegend">
           <div className="roadmapLegendLabel">Plánovací vrstvy</div>
           <div className="roadmapLegendItems">
-            <span className="legendPill typeL">Komplexní priorita</span>
-            <span className="legendPill typeM">Střední projekt</span>
-            <span className="legendPill typeS">Quick win</span>
+            <span className="legendPill typeL">Komplex</span>
+            <span className="legendPill typeM">Standard</span>
+            <span className="legendPill typeS">Easy win</span>
           </div>
         </div>
 
