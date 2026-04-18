@@ -1,5 +1,6 @@
 "use client";
 
+import Link from 'next/link';
 import { useEffect, useMemo, useState, type DragEvent } from 'react';
 import { logout } from '@/lib/auth-client';
 import { LFAProject, LFAProjectCategory, LFAProjectType } from '@/lib/types';
@@ -270,47 +271,52 @@ export function ProjectPlanner({ projects, categories }: Props) {
             <div className="panelStatBadge">{projects.length} projektů</div>
           </div>
 
-          <div className="catalogFilters">
-            <div className="tabRow">
-              <button
-                type="button"
-                className={`filterPill ${activeCategory === 'all' ? 'isActive' : ''}`}
-                onClick={() => setActiveCategory('all')}
-              >
-                Vše
-              </button>
-              {categories.map((category) => (
-                <button
-                  key={category.id}
-                  type="button"
-                  className={`filterPill ${activeCategory === category.id ? 'isActive' : ''}`}
-                  onClick={() => setActiveCategory(category.id)}
-                >
-                  {category.label}
-                </button>
-              ))}
-            </div>
+          <div className="catalogWorkspace">
+            <aside className="catalogSidebar">
+              <div className="searchWrap">
+                <input
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder="Hledat opatření nebo ID projektu"
+                />
+              </div>
 
-            <div className="searchWrap">
-              <input
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Hledat opatření nebo ID projektu"
-              />
-            </div>
-          </div>
+              <div className="catalogSidebarBlock">
+                <div className="catalogSidebarTitle">Filtr kategorií</div>
+                <div className="tabRow tabColumn">
+                  <button
+                    type="button"
+                    className={`filterPill ${activeCategory === 'all' ? 'isActive' : ''}`}
+                    onClick={() => setActiveCategory('all')}
+                  >
+                    Vše
+                  </button>
+                  {categories.map((category) => (
+                    <button
+                      key={category.id}
+                      type="button"
+                      className={`filterPill ${activeCategory === category.id ? 'isActive' : ''}`}
+                      onClick={() => setActiveCategory(category.id)}
+                    >
+                      {category.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </aside>
 
-          <div className="catalogList">
-            {groupedProjects
-              ? Object.entries(groupedProjects).map(([categoryId, categoryProjects]) => (
-                  <div key={categoryId} className="catalogGroup">
-                    <div className="catalogGroupTitle">{categoryMap[categoryId]}</div>
-                    <div className="catalogGroupItems">
-                      {categoryProjects.map((project) => renderProjectChip(project))}
+            <div className="catalogList">
+              {groupedProjects
+                ? Object.entries(groupedProjects).map(([categoryId, categoryProjects]) => (
+                    <div key={categoryId} className="catalogGroup">
+                      <div className="catalogGroupTitle">{categoryMap[categoryId]}</div>
+                      <div className="catalogGroupItems">
+                        {categoryProjects.map((project) => renderProjectChip(project))}
+                      </div>
                     </div>
-                  </div>
-                ))
-              : filteredProjects.map((project) => renderProjectChip(project))}
+                  ))
+                : filteredProjects.map((project) => renderProjectChip(project))}
+            </div>
           </div>
         </section>
       </section>
@@ -320,11 +326,11 @@ export function ProjectPlanner({ projects, categories }: Props) {
   function renderProjectChip(project: LFAProject) {
     const assigned = assignedIds.has(project.id);
     return (
-      <button
+      <Link
         key={project.id}
-        type="button"
+        href={`/planner/${encodeURIComponent(project.id)}`}
         draggable={!assigned}
-        onDragStart={(event: DragEvent<HTMLButtonElement>) => {
+        onDragStart={(event: DragEvent<HTMLAnchorElement>) => {
           if (assigned) return;
           event.dataTransfer.effectAllowed = 'move';
           event.dataTransfer.setData('text/plain', project.id);
@@ -343,7 +349,7 @@ export function ProjectPlanner({ projects, categories }: Props) {
         </span>
         <strong>{project.name}</strong>
         <small>{categoryMap[project.cat]}</small>
-      </button>
+      </Link>
     );
   }
 }

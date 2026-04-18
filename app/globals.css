@@ -649,16 +649,45 @@ select {
   order: 1;
 }
 
-.catalogFilters {
+.catalogWorkspace {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.catalogSidebar {
+  position: sticky;
+  top: 24px;
   display: grid;
   gap: 14px;
-  margin-bottom: 18px;
+}
+
+.catalogSidebarBlock {
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: rgba(255,255,255,0.82);
+  padding: 12px;
+}
+
+.catalogSidebarTitle {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.72rem;
+  color: var(--ink-soft);
+  margin-bottom: 10px;
+  font-weight: 700;
 }
 
 .tabRow {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+.tabColumn {
+  flex-direction: column;
+  flex-wrap: nowrap;
 }
 
 .filterPill {
@@ -668,6 +697,7 @@ select {
   padding: 8px 12px;
   border-radius: 999px;
   cursor: pointer;
+  text-align: left;
 }
 
 .filterPill.isActive {
@@ -680,8 +710,7 @@ select {
   display: grid;
   gap: 14px;
   max-height: none;
-  overflow: auto;
-  padding-right: 4px;
+  min-width: 0;
 }
 
 .catalogGroup {
@@ -702,30 +731,79 @@ select {
 
 .catalogChip {
   width: 100%;
-  border-radius: 18px;
+  border-radius: 16px;
   border: 1px solid transparent;
-  padding: 14px;
+  padding: 11px 12px;
   display: grid;
-  gap: 6px;
+  gap: 4px;
   text-align: left;
   cursor: pointer;
   transition: transform 120ms ease, box-shadow 120ms ease, opacity 120ms ease, border-color 120ms ease;
 }
 
 .catalogChip strong {
-  font-size: 0.98rem;
-  line-height: 1.35;
+  font-size: 0.88rem;
+  line-height: 1.25;
 }
 
 .catalogChip small {
   color: inherit;
   opacity: 0.8;
+  font-size: 0.8rem;
 }
 
 .catalogChipTop {
   display: flex;
   justify-content: space-between;
   gap: 10px;
+}
+
+.chipCode,
+.chipType {
+  font-size: 0.65rem;
+}
+
+.projectDetailPage {
+  max-width: 1120px;
+}
+
+.projectDetailShell {
+  background: rgba(255,255,255,0.9);
+}
+
+.projectDetailTopbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.projectBackLink {
+  display: inline-flex;
+  align-items: center;
+}
+
+.projectDetailHeader {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.projectDetailHeader h1 {
+  margin: 0;
+  font-size: clamp(2rem, 5vw, 3rem);
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+}
+
+.projectDetailGrid {
+  display: grid;
+  gap: 16px;
+}
+
+.detailBlockWide {
+  grid-column: 1 / -1;
 }
 
 .catalogChip.isAssigned {
@@ -860,6 +938,18 @@ select {
   .brandHeroInner,
   .plannerLayout,
   .timelineGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .catalogWorkspace {
+    grid-template-columns: 1fr;
+  }
+
+  .catalogSidebar {
+    position: static;
+  }
+
+  .catalogGroupItems {
     grid-template-columns: 1fr;
   }
 
