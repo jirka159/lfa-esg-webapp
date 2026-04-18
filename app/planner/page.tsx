@@ -1,47 +1,52 @@
-import { activities } from '@/data/activities';
-import { PlannerBoard } from '@/components/planner-board';
 import { AuthGuard } from '@/components/auth-guard';
+import { ProjectPlanner } from '@/components/project-planner';
+import { lfaProjectCategories, lfaProjects } from '@/data/lfa-projects';
 
 export default function PlannerPage() {
-  const plannedCount = activities.filter((item) => item.planned).length;
-  const catalogCount = activities.length - plannedCount;
-
   return (
     <AuthGuard>
       <main className="dashboardPage">
-        <header className="topBar">
-          <div>
-            <span className="eyebrow">lfa.jirkovo.app</span>
-            <h1>LFA ESG Planner</h1>
-            <p className="muted">Jednoduchý MVP dashboard pro výběr a řazení ESG iniciativ.</p>
-          </div>
+        <header className="brandHero brandHeroRoadmap">
+          <div className="brandHeroInner">
+            <div className="brandCopy">
+              <span className="eyebrow">Ligová fotbalová asociace</span>
+              <h1>LFA ESG Roadmap 2026–2030</h1>
+              <p className="muted">
+                Strategický plánovač projektů s časovou osou, drag &amp; drop roky 2026–2030 a katalogem opatření
+                převzatým z podkladového ESG katalogu.
+              </p>
 
-          <div className="topBarMeta">
-            <div className="metricCard">
-              <span>V plánu</span>
-              <strong>{plannedCount}</strong>
+              <div className="heroRibbon">
+                <span>Roadmapa 2026–2030</span>
+                <span>Drag &amp; drop plánování</span>
+                <span>Projektový detail</span>
+              </div>
             </div>
-            <div className="metricCard">
-              <span>Katalog</span>
-              <strong>{catalogCount}</strong>
-            </div>
+
+            <aside className="heroScoreboard" aria-label="Souhrn plánování">
+              <div className="scoreboardHeader">
+                <span className="eyebrow">Planner overview</span>
+                <strong>{lfaProjects.length} projektů v katalogu</strong>
+              </div>
+              <div className="scoreboardGrid scoreboardGridStacked">
+                <div className="metricCard metricCardFeatured">
+                  <span>Roky roadmapy</span>
+                  <strong>2026–2030</strong>
+                </div>
+                <div className="metricCard">
+                  <span>Kategorie</span>
+                  <strong>{lfaProjectCategories.length}</strong>
+                </div>
+              </div>
+              <div className="scoreboardNote">
+                <span className="scorePulse" aria-hidden="true" />
+                Krok 1: struktura a plánování projektů
+              </div>
+            </aside>
           </div>
         </header>
 
-        <section className="summaryStrip">
-          <div className="summaryCard">
-            <span className="eyebrow">Aktuální fokus</span>
-            <h3>ESG roadmapa Q2–Q3 2026</h3>
-            <p>Přesouvejte iniciativy mezi katalogem a plánovanou roadmapou pomocí drag &amp; drop nebo akčních tlačítek.</p>
-          </div>
-          <div className="summaryCard">
-            <span className="eyebrow">Režim dat</span>
-            <h3>Lokální připravený dataset</h3>
-            <p>Připraveno pro rychlé doručení MVP. Napojení na Google Sheet lze doplnit v další iteraci.</p>
-          </div>
-        </section>
-
-        <PlannerBoard initialActivities={activities} />
+        <ProjectPlanner projects={lfaProjects} categories={lfaProjectCategories} />
       </main>
     </AuthGuard>
   );

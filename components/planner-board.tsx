@@ -72,7 +72,7 @@ export function PlannerBoard({ initialActivities }: Props) {
 
   return (
     <>
-      <div className="boardActions" style={{ display: 'flex', gap: 12, marginBottom: 18, justifyContent: 'flex-end' }}>
+      <div className="boardActions">
         <button className="secondaryButton" type="button" onClick={resetBoard}>
           Resetovat plán
         </button>
@@ -89,7 +89,7 @@ export function PlannerBoard({ initialActivities }: Props) {
           <div className="panelHeader">
             <div>
               <span className="eyebrow">Plánované aktivity</span>
-              <h2>MVP roadmapa</h2>
+              <h2>Prioritní roadmapa</h2>
             </div>
             <div className="panelStat">{plannedItems.length} aktivních</div>
           </div>
@@ -109,7 +109,7 @@ export function PlannerBoard({ initialActivities }: Props) {
           <div className="panelHeader">
             <div>
               <span className="eyebrow">Katalog ESG aktivit</span>
-              <h2>Kandidátní iniciativy</h2>
+              <h2>Zásobník iniciativ</h2>
             </div>
             <div className="panelStat">{catalogItems.length} dostupných</div>
           </div>
