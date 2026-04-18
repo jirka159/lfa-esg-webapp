@@ -713,6 +713,39 @@ select {
   min-width: 0;
 }
 
+.catalogListByType {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: start;
+  gap: 14px;
+}
+
+.typeColumnWrap {
+  display: grid;
+  gap: 10px;
+}
+
+.typeColumnHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+  border-radius: 16px;
+  padding: 10px 12px;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+}
+
+.typeColumnHeader strong {
+  font-size: 0.82rem;
+}
+
+.typeColumnBody {
+  display: grid;
+  gap: 10px;
+}
+
 .catalogGroup {
   display: grid;
   gap: 10px;
@@ -945,12 +978,13 @@ select {
     grid-template-columns: 1fr;
   }
 
-  .catalogSidebar {
-    position: static;
-  }
-
+  .catalogListByType,
   .catalogGroupItems {
     grid-template-columns: 1fr;
+  }
+
+  .catalogSidebar {
+    position: static;
   }
 
   .detailPanel {

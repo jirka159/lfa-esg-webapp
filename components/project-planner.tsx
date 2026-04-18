@@ -107,6 +107,14 @@ export function ProjectPlanner({ projects, categories }: Props) {
     return groups;
   }, [activeCategory, filteredProjects, query]);
 
+  const groupedByType = useMemo(() => {
+    const groups: Record<LFAProjectType, LFAProject[]> = { L: [], M: [], S: [] };
+    for (const project of filteredProjects) {
+      groups[project.type].push(project);
+    }
+    return groups;
+  }, [filteredProjects]);
+
   function handleDrop(year: (typeof YEARS)[number], slotKey: SlotKey) {
     if (!draggedId) return;
     const project = projectMap[draggedId];
@@ -305,17 +313,29 @@ export function ProjectPlanner({ projects, categories }: Props) {
               </div>
             </aside>
 
-            <div className="catalogList">
-              {groupedProjects
-                ? Object.entries(groupedProjects).map(([categoryId, categoryProjects]) => (
-                    <div key={categoryId} className="catalogGroup">
-                      <div className="catalogGroupTitle">{categoryMap[categoryId]}</div>
-                      <div className="catalogGroupItems">
-                        {categoryProjects.map((project) => renderProjectChip(project))}
+            <div className={`catalogList ${activeCategory === 'all' && !query.trim() ? 'catalogListByType' : ''}`}>
+              {activeCategory === 'all' && !query.trim()
+                ? (['L', 'M', 'S'] as LFAProjectType[]).map((type) => (
+                    <section key={type} className="typeColumnWrap">
+                      <div className={`typeColumnHeader ${TYPE_CLASS[type]}`}>
+                        <span>{TYPE_LABEL[type]}</span>
+                        <strong>{groupedByType[type].length}</strong>
                       </div>
-                    </div>
+                      <div className="typeColumnBody">
+                        {groupedByType[type].map((project) => renderProjectChip(project))}
+                      </div>
+                    </section>
                   ))
-                : filteredProjects.map((project) => renderProjectChip(project))}
+                : groupedProjects
+                  ? Object.entries(groupedProjects).map(([categoryId, categoryProjects]) => (
+                      <div key={categoryId} className="catalogGroup">
+                        <div className="catalogGroupTitle">{categoryMap[categoryId]}</div>
+                        <div className="catalogGroupItems">
+                          {categoryProjects.map((project) => renderProjectChip(project))}
+                        </div>
+                      </div>
+                    ))
+                  : filteredProjects.map((project) => renderProjectChip(project))}
             </div>
           </div>
         </section>
