@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { lfaProjects } from '@/data/lfa-projects';
 import { hasLfaSheetCredentials, upsertLfaProjectStatus } from '@/lib/google-sheets-lfa';
 import { LFAProjectStatusUpdate } from '@/lib/types';
 
@@ -20,10 +19,8 @@ export async function POST(request: Request) {
     );
   }
 
-  const project = lfaProjects.find((item) => item.id === payload.id);
-
   try {
-    await upsertLfaProjectStatus({ ...payload, projectName: project?.name });
+    await upsertLfaProjectStatus(payload);
     return NextResponse.json({ ok: true });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Synchronizace se nezdařila.';

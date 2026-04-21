@@ -1,6 +1,5 @@
-import { LFAProject, LFAProjectStatusUpdate, LFAZapracovaniStatus } from '@/lib/types';
+import { LFAProjectStatusUpdate, LFAZapracovaniStatus } from '@/lib/types';
 
-export const LFA_PROJECT_STATUS_STORAGE_KEY = 'lfa-esg-project-status-v1';
 export const LFA_ZAPRACOVANI_OPTIONS: LFAZapracovaniStatus[] = ['Idea', 'Připravuje se', 'Připraveno'];
 
 export function statusBadgeClass(status: LFAZapracovaniStatus) {
@@ -12,31 +11,6 @@ export function statusBadgeClass(status: LFAZapracovaniStatus) {
     case 'Připraveno':
       return 'statusReady';
   }
-}
-
-export function mergeProjectStatus(projects: LFAProject[], updates: Record<string, LFAProjectStatusUpdate>) {
-  return projects.map((project) => {
-    const update = updates[project.id];
-    return update ? { ...project, ...update } : project;
-  });
-}
-
-export function readProjectStatusOverrides(): Record<string, LFAProjectStatusUpdate> {
-  if (typeof window === 'undefined') return {};
-
-  try {
-    const raw = window.localStorage.getItem(LFA_PROJECT_STATUS_STORAGE_KEY);
-    if (!raw) return {};
-    const parsed = JSON.parse(raw) as Record<string, LFAProjectStatusUpdate>;
-    return parsed ?? {};
-  } catch {
-    return {};
-  }
-}
-
-export function writeProjectStatusOverrides(updates: Record<string, LFAProjectStatusUpdate>) {
-  if (typeof window === 'undefined') return;
-  window.localStorage.setItem(LFA_PROJECT_STATUS_STORAGE_KEY, JSON.stringify(updates));
 }
 
 export async function syncProjectStatusToSheet(update: LFAProjectStatusUpdate) {

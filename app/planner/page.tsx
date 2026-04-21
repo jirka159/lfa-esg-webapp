@@ -1,8 +1,13 @@
 import { AuthGuard } from '@/components/auth-guard';
 import { ProjectPlannerClient } from '@/components/project-planner-client';
-import { lfaProjectCategories, lfaProjects } from '@/data/lfa-projects';
+import { lfaProjectCategories } from '@/data/lfa-projects';
+import { fetchLfaProjectsFromSheet } from '@/lib/google-sheets-lfa';
 
-export default function PlannerPage() {
+export const dynamic = 'force-dynamic';
+
+export default async function PlannerPage() {
+  const projects = await fetchLfaProjectsFromSheet();
+
   return (
     <AuthGuard>
       <main className="dashboardPage">
@@ -26,7 +31,7 @@ export default function PlannerPage() {
             <aside className="heroScoreboard" aria-label="Souhrn plánování">
               <div className="scoreboardHeader">
                 <span className="eyebrow">Planner overview</span>
-                <strong>{lfaProjects.length} projektů v katalogu</strong>
+                <strong>{projects.length} projektů v katalogu</strong>
               </div>
               <div className="scoreboardGrid scoreboardGridStacked">
                 <div className="metricCard metricCardFeatured">
@@ -46,7 +51,7 @@ export default function PlannerPage() {
           </div>
         </header>
 
-        <ProjectPlannerClient projects={lfaProjects} categories={lfaProjectCategories} />
+        <ProjectPlannerClient projects={projects} categories={lfaProjectCategories} />
       </main>
     </AuthGuard>
   );

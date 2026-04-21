@@ -1,5 +1,4 @@
 const nextConfig = {
-  output: 'export',
   experimental: {
     typedRoutes: false
   }

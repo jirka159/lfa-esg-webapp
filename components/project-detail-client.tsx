@@ -1,16 +1,10 @@
 "use client";
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState, useTransition } from 'react';
+import { useMemo, useState, useTransition } from 'react';
 import { lfaProjectCategories } from '@/data/lfa-projects';
 import { LFAProject, LFAProjectStatusUpdate } from '@/lib/types';
-import {
-  LFA_ZAPRACOVANI_OPTIONS,
-  readProjectStatusOverrides,
-  statusBadgeClass,
-  syncProjectStatusToSheet,
-  writeProjectStatusOverrides
-} from '@/lib/lfa-project-status';
+import { LFA_ZAPRACOVANI_OPTIONS, statusBadgeClass, syncProjectStatusToSheet } from '@/lib/lfa-project-status';
 import { ProjectStatusBadges } from '@/components/project-status-badges';
 
 const TYPE_LABEL = {
@@ -50,24 +44,15 @@ export function ProjectDetailClient({ project }: { project: LFAProject }) {
   const [saveMessage, setSaveMessage] = useState<string>('');
   const [isPending, startTransition] = useTransition();
 
-  useEffect(() => {
-    const stored = readProjectStatusOverrides()[project.id];
-    if (stored) setFormState(stored);
-  }, [project.id]);
-
   function handleSave() {
     setSaveMessage('');
     startTransition(async () => {
-      const updates = readProjectStatusOverrides();
-      updates[project.id] = formState;
-      writeProjectStatusOverrides(updates);
-
       try {
         await syncProjectStatusToSheet(formState);
-        setSaveMessage('Změny byly uložené lokálně i odeslané do Google Sheetu.');
+        setSaveMessage('Změny byly uložené do Google Sheetu. Po refreshi se načtou z něj.');
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Nepodařilo se uložit změny.';
-        setSaveMessage(`Změny jsou uložené lokálně. Google Sheet: ${message}`);
+        setSaveMessage(message);
       }
     });
   }

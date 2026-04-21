@@ -9,6 +9,7 @@
     "export": "next build",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
+    "sync:lfa-sheet": "node scripts/sync-lfa-projects-sheet.mjs",
     "deploy:ftp": "bash scripts/deploy-ftp.sh"
   },
   "dependencies": {

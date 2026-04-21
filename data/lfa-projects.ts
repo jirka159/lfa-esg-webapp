@@ -53,7 +53,7 @@ export const lfaProjectCategories: LFAProjectCategory[] = [
   }
 ];
 
-const lfaProjectsSeed = [
+export const lfaProjectsSeed = [
   {
     "id": "1.1",
     "name": "Stadion bez předsudků (easy)",
@@ -1525,3 +1525,11 @@ export const lfaProjects: LFAProject[] = lfaProjectsSeed.map((project) => ({
   stavZapracovani: DEFAULT_STATUS_BY_TYPE[project.type],
   muzeDoProdukce: false
 }));
+
+export function getDefaultLfaProjects(): LFAProject[] {
+  return lfaProjectsSeed.map((project) => ({
+    ...project,
+    stavZapracovani: DEFAULT_STATUS_BY_TYPE[project.type],
+    muzeDoProdukce: false
+  }));
+}

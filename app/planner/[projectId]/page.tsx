@@ -1,14 +1,12 @@
 import { notFound } from 'next/navigation';
 import { AuthGuard } from '@/components/auth-guard';
 import { ProjectDetailClient } from '@/components/project-detail-client';
-import { lfaProjects } from '@/data/lfa-projects';
+import { fetchLfaProjectById } from '@/lib/google-sheets-lfa';
 
-export function generateStaticParams() {
-  return lfaProjects.map((project) => ({ projectId: project.id }));
-}
+export const dynamic = 'force-dynamic';
 
-export default function ProjectDetailPage({ params }: { params: { projectId: string } }) {
-  const project = lfaProjects.find((item) => item.id === decodeURIComponent(params.projectId));
+export default async function ProjectDetailPage({ params }: { params: { projectId: string } }) {
+  const project = await fetchLfaProjectById(decodeURIComponent(params.projectId));
   if (!project) notFound();
 
   return (
