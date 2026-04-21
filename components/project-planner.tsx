@@ -1,12 +1,12 @@
 "use client";
 
 import Link from 'next/link';
-import { useMemo, useState, useTransition, type DragEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, useTransition, type PointerEvent as ReactPointerEvent } from 'react';
 import { logout } from '@/lib/auth-client';
 import { ProjectStatusBadges } from '@/components/project-status-badges';
-import { createEmptyRoadmapPlan, LFA_ROADMAP_SLOTS, LFA_ROADMAP_YEARS, normalizeRoadmapState } from '@/lib/lfa-roadmap';
+import { createEmptyRoadmapPlan, LFA_ROADMAP_MINIMUM_SECTIONS, LFA_ROADMAP_YEARS, normalizeRoadmapState } from '@/lib/lfa-roadmap';
 import { syncRoadmapToSheet } from '@/lib/lfa-roadmap-client';
-import { LFARoadmapSlotKey, LFARoadmapState, LFARoadmapYear, LFAProject, LFAProjectCategory, LFAProjectType } from '@/lib/types';
+import { LFARoadmapState, LFARoadmapYear, LFAProject, LFAProjectCategory, LFAProjectType } from '@/lib/types';
 
 const TYPE_LABEL: Record<LFAProjectType, string> = {
   L: 'Komplex',
@@ -20,39 +20,45 @@ const TYPE_CLASS: Record<LFAProjectType, string> = {
   S: 'typeS'
 };
 
+const PLANNER_RETURN_KEY = 'lfa-planner-return';
+
 type Props = {
   projects: LFAProject[];
   categories: LFAProjectCategory[];
   initialPlan: LFARoadmapState;
 };
 
+type DragState = {
+  projectId: string;
+  pointerId: number;
+  startX: number;
+  startY: number;
+  x: number;
+  y: number;
+  sourceYear?: LFARoadmapYear;
+};
+
 export function ProjectPlanner({ projects, categories, initialPlan }: Props) {
   const [plan, setPlan] = useState<LFARoadmapState>(() => normalizeRoadmapState(initialPlan, projects));
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [query, setQuery] = useState('');
-  const [draggedId, setDraggedId] = useState<string | null>(null);
-  const [activeDropzone, setActiveDropzone] = useState<string | null>(null);
+  const [dragState, setDragState] = useState<DragState | null>(null);
+  const [activeDropYear, setActiveDropYear] = useState<LFARoadmapYear | null>(null);
   const [selectedId, setSelectedId] = useState<string>(projects[0]?.id ?? '');
   const [saveMessage, setSaveMessage] = useState('');
   const [isPending, startTransition] = useTransition();
+  const restoredScrollRef = useRef(false);
+  const suppressClickRef = useRef<string | null>(null);
 
   const categoryMap = useMemo(
     () => Object.fromEntries(categories.map((category) => [category.id, category.label])),
     [categories]
   );
 
-  const projectMap = useMemo(
-    () => Object.fromEntries(projects.map((project) => [project.id, project])),
-    [projects]
-  );
+  const projectMap = useMemo(() => Object.fromEntries(projects.map((project) => [project.id, project])), [projects]);
 
   const assignedIds = useMemo(
-    () =>
-      new Set(
-        Object.values(plan)
-          .flatMap((yearPlan) => Object.values(yearPlan))
-          .filter(Boolean) as string[]
-      ),
+    () => new Set(Object.values(plan).flatMap((yearPlan) => yearPlan).filter(Boolean)),
     [plan]
   );
 
@@ -73,11 +79,92 @@ export function ProjectPlanner({ projects, categories, initialPlan }: Props) {
 
   const groupedByType = useMemo(() => {
     const groups: Record<LFAProjectType, LFAProject[]> = { L: [], M: [], S: [] };
-    for (const project of filteredProjects) {
-      groups[project.type].push(project);
-    }
+    for (const project of filteredProjects) groups[project.type].push(project);
     return groups;
   }, [filteredProjects]);
+
+  const projectsByYear = useMemo(() => {
+    return Object.fromEntries(
+      LFA_ROADMAP_YEARS.map((year) => {
+        const ids = plan[year] ?? [];
+        const grouped: Record<LFAProjectType, LFAProject[]> = { L: [], M: [], S: [] };
+        for (const id of ids) {
+          const project = projectMap[id];
+          if (project) grouped[project.type].push(project);
+        }
+        return [year, grouped];
+      })
+    ) as Record<LFARoadmapYear, Record<LFAProjectType, LFAProject[]>>;
+  }, [plan, projectMap]);
+
+  useEffect(() => {
+    if (restoredScrollRef.current) return;
+    restoredScrollRef.current = true;
+
+    const raw = window.sessionStorage.getItem(PLANNER_RETURN_KEY);
+    if (!raw) return;
+
+    try {
+      const parsed = JSON.parse(raw) as { projectId?: string; scrollY?: number };
+      window.sessionStorage.removeItem(PLANNER_RETURN_KEY);
+      if (parsed.projectId) {
+        setSelectedId(parsed.projectId);
+        requestAnimationFrame(() => {
+          const target = document.querySelector<HTMLElement>(`[data-project-id="${CSS.escape(parsed.projectId!)}"]`);
+          target?.scrollIntoView({ block: 'center', behavior: 'auto' });
+          target?.focus?.({ preventScroll: true });
+          if (typeof parsed.scrollY === 'number') {
+            window.scrollTo({ top: parsed.scrollY, behavior: 'auto' });
+          }
+        });
+      } else if (typeof parsed.scrollY === 'number') {
+        window.scrollTo({ top: parsed.scrollY, behavior: 'auto' });
+      }
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    if (!dragState) return;
+
+    const handlePointerMove = (event: PointerEvent) => {
+      setDragState((current) => {
+        if (!current) return current;
+        if (Math.abs(event.clientX - current.startX) + Math.abs(event.clientY - current.startY) > 4) {
+          suppressClickRef.current = current.projectId;
+        }
+        return { ...current, x: event.clientX, y: event.clientY };
+      });
+      const element = document.elementFromPoint(event.clientX, event.clientY) as HTMLElement | null;
+      const yearHost = element?.closest<HTMLElement>('[data-drop-year]');
+      const year = yearHost?.dataset.dropYear ? Number(yearHost.dataset.dropYear) as LFARoadmapYear : null;
+      setActiveDropYear(year && LFA_ROADMAP_YEARS.includes(year) ? year : null);
+    };
+
+    const finishDrag = (commit: boolean) => {
+      setDragState((current) => {
+        if (!current) return current;
+        if (commit && activeDropYear) {
+          placeProject(current.projectId, activeDropYear);
+          setSelectedId(current.projectId);
+        }
+        return null;
+      });
+      setActiveDropYear(null);
+    };
+
+    const handlePointerUp = () => finishDrag(true);
+    const handlePointerCancel = () => finishDrag(false);
+
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp);
+    window.addEventListener('pointercancel', handlePointerCancel);
+
+    return () => {
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
+      window.removeEventListener('pointercancel', handlePointerCancel);
+    };
+  }, [activeDropYear, dragState]);
 
   function persistPlan(nextPlan: LFARoadmapState, successMessage = 'Roadmapa byla uložená do Google Sheetu.') {
     const previousPlan = plan;
@@ -98,51 +185,41 @@ export function ProjectPlanner({ projects, categories, initialPlan }: Props) {
     });
   }
 
-  function buildPlanWithPlacement(projectId: string, year: LFARoadmapYear, slotKey: LFARoadmapSlotKey) {
-    const next = structuredClone(plan) as LFARoadmapState;
+  function placeProject(projectId: string, year: LFARoadmapYear) {
+    const project = projectMap[projectId];
+    if (!project) return;
 
+    const next = structuredClone(plan) as LFARoadmapState;
     for (const planYear of LFA_ROADMAP_YEARS) {
-      for (const slot of LFA_ROADMAP_SLOTS) {
-        if (next[planYear][slot.key] === projectId) {
-          next[planYear][slot.key] = null;
-        }
-      }
+      next[planYear] = (next[planYear] ?? []).filter((id) => id !== projectId);
     }
 
-    next[year][slotKey] = projectId;
-    return next;
+    const yearProjects = [...(next[year] ?? [])]
+      .map((id) => projectMap[id])
+      .filter((item): item is LFAProject => Boolean(item));
+
+    const sameTypeBefore = yearProjects.filter((item) => item.type === project.type).length;
+    const insertIndex = yearProjects.reduce((acc, item, index) => {
+      if (typeWeight(item.type) <= typeWeight(project.type)) return index + 1;
+      return acc;
+    }, 0);
+
+    const nextIds = yearProjects.map((item) => item.id);
+    nextIds.splice(insertIndex, 0, projectId);
+    next[year] = nextIds;
+
+    const successMessage =
+      sameTypeBefore > 0
+        ? 'Roadmapa byla aktualizovaná a projekt se přidal do vybraného roku.'
+        : 'Roadmapa byla uložená do Google Sheetu.';
+
+    persistPlan(next, successMessage);
   }
 
-  function getDraggedProject(event?: DragEvent<HTMLElement>) {
-    const eventProjectId = event?.dataTransfer?.getData('text/plain') || '';
-    const projectId = eventProjectId || draggedId;
-    return projectId ? projectMap[projectId] : undefined;
-  }
-
-  function handleDrop(event: DragEvent<HTMLDivElement>, year: LFARoadmapYear, slotKey: LFARoadmapSlotKey) {
-    event.preventDefault();
-
-    const projectId = event.dataTransfer.getData('text/plain') || draggedId;
-    if (!projectId) return;
-
-    const project = projectMap[projectId];
-    const slotDef = LFA_ROADMAP_SLOTS.find((slot) => slot.key === slotKey);
-    if (!project || !slotDef || slotDef.type !== project.type) return;
-
-    persistPlan(buildPlanWithPlacement(projectId, year, slotKey));
-    setSelectedId(projectId);
-    setDraggedId(null);
-    setActiveDropzone(null);
-  }
-
-  function clearSlot(year: LFARoadmapYear, slotKey: LFARoadmapSlotKey) {
-    const nextPlan = {
-      ...plan,
-      [year]: {
-        ...plan[year],
-        [slotKey]: null
-      }
-    };
+  function clearProject(projectId: string) {
+    const nextPlan = Object.fromEntries(
+      LFA_ROADMAP_YEARS.map((year) => [year, (plan[year] ?? []).filter((id) => id !== projectId)])
+    ) as LFARoadmapState;
 
     persistPlan(nextPlan, 'Roadmapa byla aktualizovaná v Google Sheetu.');
   }
@@ -154,6 +231,30 @@ export function ProjectPlanner({ projects, categories, initialPlan }: Props) {
   function handleLogout() {
     logout();
     window.location.href = '/login';
+  }
+
+  function handlePointerDragStart(event: ReactPointerEvent<HTMLElement>, projectId: string, sourceYear?: LFARoadmapYear) {
+    if (event.button !== 0) return;
+    setDragState({
+      projectId,
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      x: event.clientX,
+      y: event.clientY,
+      sourceYear
+    });
+    setSelectedId(projectId);
+  }
+
+  function rememberPlannerPosition(projectId: string) {
+    window.sessionStorage.setItem(
+      PLANNER_RETURN_KEY,
+      JSON.stringify({
+        projectId,
+        scrollY: window.scrollY
+      })
+    );
   }
 
   return (
@@ -173,7 +274,8 @@ export function ProjectPlanner({ projects, categories, initialPlan }: Props) {
             <span className="eyebrow">Roadmapa 2026–2030</span>
             <h2>Strategický board priorit LFA</h2>
             <p className="sectionLead">
-              Každý rok funguje jako plánovací sloupec. Do slotů přiřazuj projekty z katalogu a skládej víceletou ESG roadmapu.
+              Projekty stačí přetáhnout na sloupec roku. Planner je automaticky zařadí do správné sekce podle
+              komplexity a dovolí přidat více aktivit stejného typu.
             </p>
             {saveMessage ? <p className="syncMessage">{saveMessage}</p> : null}
           </div>
@@ -199,88 +301,77 @@ export function ProjectPlanner({ projects, categories, initialPlan }: Props) {
         </div>
 
         <div className="timelineGrid">
-          {LFA_ROADMAP_YEARS.map((year) => (
-            <article className="yearColumn" key={year}>
-              <div className="yearHeading">
-                <span className="yearLabel">Sezóna</span>
-                <h3>{year}</h3>
-              </div>
+          {LFA_ROADMAP_YEARS.map((year) => {
+            const grouped = projectsByYear[year];
+            const isActive = activeDropYear === year;
 
-              <div className="yearSlots">
-                {LFA_ROADMAP_SLOTS.map((slot) => {
-                  const projectId = plan[year][slot.key];
-                  const project = projectId ? projectMap[projectId] : null;
-                  const isActive = activeDropzone === `${year}-${slot.key}`;
+            return (
+              <article className={`yearColumn ${isActive ? 'isActive' : ''}`} key={year} data-drop-year={year}>
+                <div className="yearHeading">
+                  <span className="yearLabel">Sezóna</span>
+                  <h3>{year}</h3>
+                </div>
 
-                  return (
-                    <div
-                      key={slot.key}
-                      className={`timelineSlot ${TYPE_CLASS[slot.type]} ${isActive ? 'isActive' : ''} ${project ? 'hasProject' : ''}`}
-                      onDragOver={(event) => {
-                        const draggedProject = getDraggedProject(event);
-                        if (!draggedProject || draggedProject.type !== slot.type) return;
-                        event.preventDefault();
-                        event.dataTransfer.dropEffect = 'move';
-                        setActiveDropzone(`${year}-${slot.key}`);
-                      }}
-                      onDragLeave={() => setActiveDropzone((current) => (current === `${year}-${slot.key}` ? null : current))}
-                      onDrop={(event) => handleDrop(event, year, slot.key)}
-                    >
-                      <div className="slotTopline">
-                        <span>{slot.label}</span>
-                        <small>{TYPE_LABEL[slot.type]}</small>
-                      </div>
+                <div className={`yearSections ${isActive ? 'isActive' : ''}`}>
+                  {LFA_ROADMAP_MINIMUM_SECTIONS.map((type) => {
+                    const yearProjectsOfType = grouped[type];
+                    return (
+                      <section className={`timelineGroup ${TYPE_CLASS[type]}`} key={`${year}-${type}`}>
+                        <div className="slotTopline timelineGroupHeading">
+                          <span>{TYPE_LABEL[type]}</span>
+                          <small>{yearProjectsOfType.length || '0'}×</small>
+                        </div>
 
-                      {project ? (
-                        <button
-                          type="button"
-                          draggable
-                          className={`slotProjectCard ${TYPE_CLASS[project.type]}`}
-                          onDragStart={(event) => {
-                            event.dataTransfer.effectAllowed = 'move';
-                            event.dataTransfer.setData('text/plain', project.id);
-                            setDraggedId(project.id);
-                            setSelectedId(project.id);
-                          }}
-                          onDragEnd={() => {
-                            setDraggedId(null);
-                            setActiveDropzone(null);
-                          }}
-                          onClick={() => setSelectedId(project.id)}
-                        >
-                          <span className="slotProjectMeta">
-                            <span>{project.id}</span>
-                            <Link
-                              href={`/planner/${encodeURIComponent(project.id)}`}
-                              className="slotProjectDetailLink"
-                              draggable={false}
-                              onClick={(event) => event.stopPropagation()}
-                            >
-                              Detail →
-                            </Link>
-                          </span>
-                          <strong>{project.name}</strong>
-                          <span className="slotProjectCategory">{categoryMap[project.cat]}</span>
-                          <ProjectStatusBadges project={project} compact />
-                          <span
-                            className="slotRemove"
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              clearSlot(year, slot.key);
-                            }}
-                          >
-                            ×
-                          </span>
-                        </button>
-                      ) : (
-                        <div className="slotPlaceholder">Přetáhni projekt sem</div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </article>
-          ))}
+                        <div className="timelineGroupBody">
+                          {yearProjectsOfType.length ? (
+                            yearProjectsOfType.map((project) => (
+                              <button
+                                key={project.id}
+                                type="button"
+                                className={`slotProjectCard ${TYPE_CLASS[project.type]} ${selectedId === project.id ? 'isSelected' : ''}`}
+                                onPointerDown={(event) => handlePointerDragStart(event, project.id, year)}
+                                onClick={() => setSelectedId(project.id)}
+                                data-project-id={project.id}
+                              >
+                                <span className="slotProjectMeta">
+                                  <span>{project.id}</span>
+                                  <Link
+                                    href={`/planner/${encodeURIComponent(project.id)}`}
+                                    className="slotProjectDetailLink"
+                                    onPointerDown={(event) => event.stopPropagation()}
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      rememberPlannerPosition(project.id);
+                                    }}
+                                  >
+                                    Detail →
+                                  </Link>
+                                </span>
+                                <strong>{project.name}</strong>
+                                <span className="slotProjectCategory">{categoryMap[project.cat]}</span>
+                                <ProjectStatusBadges project={project} compact />
+                                <span
+                                  className="slotRemove"
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    clearProject(project.id);
+                                  }}
+                                >
+                                  ×
+                                </span>
+                              </button>
+                            ))
+                          ) : (
+                            <div className="slotPlaceholder">Přetáhni projekt kamkoliv do sloupce roku</div>
+                          )}
+                        </div>
+                      </section>
+                    );
+                  })}
+                </div>
+              </article>
+            );
+          })}
         </div>
       </section>
 
@@ -344,6 +435,8 @@ export function ProjectPlanner({ projects, categories, initialPlan }: Props) {
           </div>
         </section>
       </section>
+
+      {dragState ? renderDragOverlay() : null}
     </>
   );
 
@@ -353,25 +446,21 @@ export function ProjectPlanner({ projects, categories, initialPlan }: Props) {
       <Link
         key={project.id}
         href={`/planner/${encodeURIComponent(project.id)}`}
-        draggable={!assigned}
-        onDragStart={(event: DragEvent<HTMLAnchorElement>) => {
+        onPointerDown={(event) => {
           if (assigned) return;
-          event.dataTransfer.effectAllowed = 'move';
-          event.dataTransfer.setData('text/plain', project.id);
-          setDraggedId(project.id);
-        }}
-        onDragEnd={() => {
-          setDraggedId(null);
-          setActiveDropzone(null);
+          handlePointerDragStart(event, project.id);
         }}
         onClick={(event) => {
-          if (draggedId) {
+          if (suppressClickRef.current === project.id) {
             event.preventDefault();
+            suppressClickRef.current = null;
             return;
           }
+          rememberPlannerPosition(project.id);
           setSelectedId(project.id);
         }}
         className={`catalogChip ${TYPE_CLASS[project.type]} ${assigned ? 'isAssigned' : ''} ${selectedId === project.id ? 'isSelected' : ''}`}
+        data-project-id={project.id}
       >
         <span className="catalogChipTop">
           <span className="chipCode">{project.id}</span>
@@ -383,4 +472,29 @@ export function ProjectPlanner({ projects, categories, initialPlan }: Props) {
       </Link>
     );
   }
+
+  function renderDragOverlay() {
+    const project = projectMap[dragState!.projectId];
+    if (!project) return null;
+
+    const movedEnough = Math.abs(dragState!.x - dragState!.startX) + Math.abs(dragState!.y - dragState!.startY) > 4;
+    if (!movedEnough) return null;
+
+    return (
+      <div className="plannerDragLayer" aria-hidden="true">
+        <div
+          className={`plannerDragPreview ${TYPE_CLASS[project.type]}`}
+          style={{ transform: `translate(${dragState!.x + 18}px, ${dragState!.y + 18}px)` }}
+        >
+          <span>{project.id}</span>
+          <strong>{project.name}</strong>
+          <small>{TYPE_LABEL[project.type]} · {categoryMap[project.cat]}</small>
+        </div>
+      </div>
+    );
+  }
+}
+
+function typeWeight(type: LFAProjectType) {
+  return type === 'L' ? 0 : type === 'M' ? 1 : 2;
 }

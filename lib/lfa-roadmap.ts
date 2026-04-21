@@ -1,29 +1,19 @@
-import {
-  LFARoadmapSheetRow,
-  LFARoadmapSlotKey,
-  LFARoadmapState,
-  LFARoadmapYear,
-  LFAProject,
-  LFAProjectType
-} from '@/lib/types';
+import { LFARoadmapSheetRow, LFARoadmapState, LFARoadmapYear, LFAProject, LFAProjectType } from '@/lib/types';
 
 export const LFA_ROADMAP_YEARS = [2026, 2027, 2028, 2029, 2030] as const satisfies readonly LFARoadmapYear[];
-
-export const LFA_ROADMAP_SLOTS = [
-  { key: 'L', label: 'Komplex', type: 'L' as const },
-  { key: 'M', label: 'Standard', type: 'M' as const },
-  { key: 'S1', label: 'Easy win 1', type: 'S' as const },
-  { key: 'S2', label: 'Easy win 2', type: 'S' as const }
-] as const satisfies readonly { key: LFARoadmapSlotKey; label: string; type: LFAProjectType }[];
-
-export const LFA_ROADMAP_SLOT_LABEL: Record<LFARoadmapSlotKey, string> = Object.fromEntries(
-  LFA_ROADMAP_SLOTS.map((slot) => [slot.key, slot.label])
-) as Record<LFARoadmapSlotKey, string>;
+export const LFA_ROADMAP_MINIMUM_SECTIONS: readonly LFAProjectType[] = ['L', 'M', 'S'] as const;
 
 export function createEmptyRoadmapPlan(): LFARoadmapState {
-  return Object.fromEntries(
-    LFA_ROADMAP_YEARS.map((year) => [year, { L: null, M: null, S1: null, S2: null }])
-  ) as LFARoadmapState;
+  return Object.fromEntries(LFA_ROADMAP_YEARS.map((year) => [year, [] as string[]])) as unknown as LFARoadmapState;
+}
+
+function dedupePreserveOrder(ids: string[]) {
+  const seen = new Set<string>();
+  return ids.filter((id) => {
+    if (!id || seen.has(id)) return false;
+    seen.add(id);
+    return true;
+  });
 }
 
 export function normalizeRoadmapState(input: unknown, projects: LFAProject[] = []): LFARoadmapState {
@@ -37,16 +27,29 @@ export function normalizeRoadmapState(input: unknown, projects: LFAProject[] = [
 
   for (const year of LFA_ROADMAP_YEARS) {
     const yearPlan = (input as Record<string, unknown>)[String(year)] ?? (input as Record<number, unknown>)[year];
+
+    if (Array.isArray(yearPlan)) {
+      for (const rawValue of dedupePreserveOrder(yearPlan.filter((item): item is string => typeof item === 'string'))) {
+        if (used.has(rawValue)) continue;
+        const project = projectMap.get(rawValue);
+        if (projects.length && !project) continue;
+        normalized[year].push(rawValue);
+        used.add(rawValue);
+      }
+      continue;
+    }
+
     if (!yearPlan || typeof yearPlan !== 'object') continue;
 
-    for (const slot of LFA_ROADMAP_SLOTS) {
-      const rawValue = (yearPlan as Record<string, unknown>)[slot.key];
-      if (typeof rawValue !== 'string' || !rawValue.trim() || used.has(rawValue)) continue;
+    const values = Object.values(yearPlan)
+      .filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+      .map((item) => item.trim());
 
+    for (const rawValue of dedupePreserveOrder(values)) {
+      if (used.has(rawValue)) continue;
       const project = projectMap.get(rawValue);
-      if (project && project.type !== slot.type) continue;
-
-      normalized[year][slot.key] = rawValue;
+      if (projects.length && !project) continue;
+      normalized[year].push(rawValue);
       used.add(rawValue);
     }
   }
@@ -54,19 +57,25 @@ export function normalizeRoadmapState(input: unknown, projects: LFAProject[] = [
   return normalized;
 }
 
-export function roadmapStateToRows(plan: LFARoadmapState, actor = 'LFA admin'): LFARoadmapSheetRow[] {
+export function roadmapStateToRows(plan: LFARoadmapState, actor = 'LFA admin', projects: LFAProject[] = []): LFARoadmapSheetRow[] {
   const rows: LFARoadmapSheetRow[] = [];
+  const projectMap = new Map(projects.map((project) => [project.id, project]));
 
   for (const year of LFA_ROADMAP_YEARS) {
-    for (const slot of LFA_ROADMAP_SLOTS) {
+    const ids = dedupePreserveOrder(plan[year] ?? []);
+    const typeCounters: Record<LFAProjectType, number> = { L: 0, M: 0, S: 0 };
+
+    for (const projectId of ids) {
+      const projectType = projectMap.get(projectId)?.type ?? guessProjectTypeFromId(projectId) ?? 'S';
+      typeCounters[projectType] += 1;
       rows.push({
         planId: 'default',
         clubId: 'LFA',
         year,
-        slotKey: slot.key,
-        slotLabel: slot.label,
-        projectType: slot.type,
-        projectId: plan[year][slot.key],
+        slotKey: `${projectType}${typeCounters[projectType]}`,
+        slotLabel: buildSlotLabel(projectType, typeCounters[projectType]),
+        projectType,
+        projectId,
         updatedBy: actor,
         updatedAt: new Date().toISOString()
       });
@@ -97,24 +106,50 @@ export function roadmapRowsToState(rows: LFARoadmapSheetRow[], projects: LFAProj
   }
 
   const used = new Set<string>();
-  for (const slotRow of latestBySlot.values()) {
-    if (!LFA_ROADMAP_YEARS.includes(slotRow.year)) continue;
-    const slot = LFA_ROADMAP_SLOTS.find((item) => item.key === slotRow.slotKey);
-    if (!slot) continue;
+  const rowsByYear = new Map<LFARoadmapYear, LFARoadmapSheetRow[]>();
+  for (const row of latestBySlot.values()) {
+    if (!LFA_ROADMAP_YEARS.includes(row.year)) continue;
+    rowsByYear.set(row.year, [...(rowsByYear.get(row.year) ?? []), row]);
+  }
 
-    if (!slotRow.projectId) {
-      plan[slotRow.year][slotRow.slotKey] = null;
-      continue;
+  for (const year of LFA_ROADMAP_YEARS) {
+    const yearRows = (rowsByYear.get(year) ?? []).sort(compareRoadmapRows);
+    for (const row of yearRows) {
+      if (!row.projectId || used.has(row.projectId)) continue;
+      const project = projectMap.get(row.projectId);
+      if (projects.length && !project) continue;
+      plan[year].push(row.projectId);
+      used.add(row.projectId);
     }
-
-    if (used.has(slotRow.projectId)) continue;
-
-    const project = projectMap.get(slotRow.projectId);
-    if (project && project.type !== slot.type) continue;
-
-    plan[slotRow.year][slotRow.slotKey] = slotRow.projectId;
-    used.add(slotRow.projectId);
   }
 
   return plan;
+}
+
+function compareRoadmapRows(a: LFARoadmapSheetRow, b: LFARoadmapSheetRow) {
+  const typeOrder = typeSortWeight(a.projectType) - typeSortWeight(b.projectType);
+  if (typeOrder !== 0) return typeOrder;
+  return extractSlotIndex(a.slotKey) - extractSlotIndex(b.slotKey);
+}
+
+function typeSortWeight(type: LFAProjectType) {
+  return type === 'L' ? 0 : type === 'M' ? 1 : 2;
+}
+
+function extractSlotIndex(slotKey: string) {
+  const match = slotKey.match(/(\d+)$/);
+  return match ? Number(match[1]) : 0;
+}
+
+function buildSlotLabel(type: LFAProjectType, index: number) {
+  if (type === 'L') return index === 1 ? 'Komplex' : `Komplex ${index}`;
+  if (type === 'M') return index === 1 ? 'Standard' : `Standard ${index}`;
+  return index === 1 ? 'Easy win' : `Easy win ${index}`;
+}
+
+function guessProjectTypeFromId(projectId: string): LFAProjectType | null {
+  if (projectId.startsWith('L-')) return 'L';
+  if (projectId.startsWith('M-')) return 'M';
+  if (projectId.startsWith('S-')) return 'S';
+  return null;
 }

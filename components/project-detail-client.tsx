@@ -104,7 +104,7 @@ export function ProjectDetailClient({ project }: { project: LFAProject }) {
             <span className="detailLabel">Řízení stavu projektu</span>
             <div className="statusEditorGrid">
               <label className="field">
-                <span>Stav zapracování</span>
+                <span>Stav</span>
                 <select
                   value={formState.stavZapracovani}
                   onChange={(event) =>

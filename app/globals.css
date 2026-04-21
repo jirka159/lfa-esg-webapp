@@ -86,20 +86,24 @@ button, input, select { font: inherit; }
 .typeL, .detailBadge.typeL { background: var(--type-l-bg); color: var(--type-l-ink); border-color: var(--type-l-line); }
 .typeM, .detailBadge.typeM { background: var(--type-m-bg); color: var(--type-m-ink); border-color: var(--type-m-line); }
 .typeS, .detailBadge.typeS { background: var(--type-s-bg); color: var(--type-s-ink); border-color: var(--type-s-line); }
-.timelineGrid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px; }
+.timelineGrid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px; align-items: start; }
 .yearColumn, .catalogPanel, .catalogSidebar, .typeColumnBody, .projectDetailShell { display: grid; gap: 14px; }
+.yearColumn { border-radius: 26px; padding: 12px; background: rgba(255,255,255,.56); border: 1px solid transparent; transition: border-color 120ms ease, box-shadow 120ms ease, background 120ms ease; }
+.yearColumn.isActive { background: rgba(255,255,255,.9); border-color: rgba(54,169,90,.22); box-shadow: inset 0 0 0 2px rgba(54,169,90,.14); }
 .yearHeading { padding: 10px 8px; }
-.yearSlots { display: grid; gap: 10px; }
-.timelineSlot { min-height: 120px; border-radius: 22px; border: 1px dashed var(--line-strong); padding: 12px; background: rgba(255,255,255,.65); display: grid; gap: 10px; align-content: start; }
-.timelineSlot.isActive { box-shadow: inset 0 0 0 2px rgba(54,169,90,.18); }
+.yearSections { display: grid; gap: 10px; }
+.timelineGroup { min-height: 120px; border-radius: 22px; border: 1px dashed var(--line-strong); padding: 12px; background: rgba(255,255,255,.65); display: grid; gap: 10px; align-content: start; }
+.timelineGroupHeading { align-items: center; }
+.timelineGroupBody { display: grid; gap: 10px; align-content: start; min-height: 48px; }
 .slotTopline { display: flex; justify-content: space-between; gap: 8px; color: var(--ink-soft); }
 .slotProjectCard, .catalogChip { display: grid; gap: 8px; width: 100%; text-align: left; border-radius: 18px; border: 1px solid var(--line); padding: 14px; background: #fff; position: relative; }
 .slotProjectMeta, .catalogChipTop { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
 .slotProjectCategory, .catalogChip small { color: var(--ink-soft); }
+.slotProjectCard.isSelected, .catalogChip.isSelected { box-shadow: inset 0 0 0 2px rgba(29,34,65,.12); }
 .slotProjectDetailLink { font-size: .78rem; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .08em; }
 .slotProjectDetailLink:hover { color: var(--ink); }
-.slotRemove { position: absolute; right: 12px; top: 12px; font-size: 1.1rem; }
-.slotPlaceholder { color: var(--ink-soft); font-size: .92rem; }
+.slotRemove { position: absolute; right: 12px; top: 12px; font-size: 1.1rem; cursor: pointer; }
+.slotPlaceholder { color: var(--ink-soft); font-size: .92rem; padding: 10px 0; }
 .plannerLayout { margin-top: 20px; }
 .catalogWorkspace { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 16px; }
 .catalogSidebar { align-content: start; }
@@ -113,7 +117,6 @@ button, input, select { font: inherit; }
 .typeColumnHeader { border-radius: 18px; padding: 12px 14px; display: flex; justify-content: space-between; font-weight: 700; }
 .typeColumnBody { gap: 10px; align-content: start; grid-auto-rows: max-content; }
 .catalogChip.isAssigned { opacity: .7; }
-.catalogChip.isSelected { box-shadow: inset 0 0 0 2px rgba(29,34,65,.12); }
 .projectStatusBadges { margin-top: 4px; }
 .projectStatusBadges.isCompact { margin-top: 0; }
 .projectStatusBadges.isCompact .statusBadge { font-size: .68rem; padding: 6px 10px; }
@@ -147,6 +150,9 @@ button, input, select { font: inherit; }
 .checkboxField input { width: 18px; height: 18px; }
 .statusEditorActions { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
 .syncMessage { margin: 0; }
+.plannerDragLayer { position: fixed; inset: 0; pointer-events: none; z-index: 50; }
+.plannerDragPreview { position: fixed; top: 0; left: 0; min-width: 260px; max-width: 320px; border-radius: 18px; border: 1px solid var(--line-strong); background: rgba(255,255,255,.96); box-shadow: 0 18px 50px rgba(18,35,58,.18); padding: 14px; display: grid; gap: 6px; }
+.plannerDragPreview span, .plannerDragPreview small { color: var(--ink-soft); }
 @media (max-width: 1100px) {
   .timelineGrid, .catalogListByType, .projectDetailGrid, .detailMetrics { grid-template-columns: 1fr; }
   .catalogWorkspace, .brandHeroInner, .loginPage, .statusEditorGrid { grid-template-columns: 1fr; }

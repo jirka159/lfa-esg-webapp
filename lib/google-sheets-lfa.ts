@@ -470,7 +470,7 @@ export async function syncSeedRoadmapToSheet(plan?: LFARoadmapState) {
   await ensureLfaRoadmapSheet();
   const values = [
     ROADMAP_HEADER_ROW as unknown as string[],
-    ...roadmapStateToRows(normalizeRoadmapState(plan ?? createEmptyRoadmapPlan())).map(roadmapRowToSheetRow)
+    ...roadmapStateToRows(normalizeRoadmapState(plan ?? createEmptyRoadmapPlan()), 'LFA admin', lfaProjects).map(roadmapRowToSheetRow)
   ];
 
   await sheetsRequest(
@@ -490,7 +490,7 @@ export async function saveLfaRoadmapToSheet(payload: LFARoadmapSavePayload, proj
   await ensureLfaRoadmapSheet();
 
   const normalizedPlan = normalizeRoadmapState(payload.plan, projects);
-  const rows = roadmapStateToRows(normalizedPlan).map(roadmapRowToSheetRow);
+  const rows = roadmapStateToRows(normalizedPlan, 'LFA admin', projects).map(roadmapRowToSheetRow);
   const values = [ROADMAP_HEADER_ROW as unknown as string[], ...rows];
 
   await sheetsRequest(

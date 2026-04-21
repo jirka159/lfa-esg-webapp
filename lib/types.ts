@@ -63,8 +63,8 @@ export type LFAProject = {
 export type LFAProjectStatusUpdate = Pick<LFAProject, 'id' | 'stavZapracovani' | 'muzeDoProdukce'>;
 
 export type LFARoadmapYear = 2026 | 2027 | 2028 | 2029 | 2030;
-export type LFARoadmapSlotKey = 'L' | 'M' | 'S1' | 'S2';
-export type LFARoadmapYearPlan = Record<LFARoadmapSlotKey, string | null>;
+export type LFARoadmapSlotKey = string;
+export type LFARoadmapYearPlan = string[];
 export type LFARoadmapState = Record<LFARoadmapYear, LFARoadmapYearPlan>;
 
 export type LFARoadmapSheetRow = {
