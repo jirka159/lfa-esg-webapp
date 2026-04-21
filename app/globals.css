@@ -107,9 +107,9 @@ button, input, select { font: inherit; }
 .filterPill { border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: 10px 12px; text-align: left; cursor: pointer; }
 .filterPill.isActive { background: var(--accent-dark); color: #fff; }
 .catalogListByType { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
-.typeColumnWrap { display: grid; gap: 10px; }
+.typeColumnWrap { display: grid; gap: 10px; align-content: start; align-self: start; }
 .typeColumnHeader { border-radius: 18px; padding: 12px 14px; display: flex; justify-content: space-between; font-weight: 700; }
-.typeColumnBody { gap: 10px; }
+.typeColumnBody { gap: 10px; align-content: start; grid-auto-rows: max-content; }
 .catalogChip.isAssigned { opacity: .7; }
 .catalogChip.isSelected { box-shadow: inset 0 0 0 2px rgba(29,34,65,.12); }
 .projectStatusBadges { margin-top: 4px; }
