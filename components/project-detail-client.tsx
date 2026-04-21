@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useMemo, useState, useTransition } from 'react';
 import { lfaProjectCategories } from '@/data/lfa-projects';
 import { LFAProject, LFAProjectStatusUpdate } from '@/lib/types';
-import { LFA_ZAPRACOVANI_OPTIONS, statusBadgeClass, syncProjectStatusToSheet } from '@/lib/lfa-project-status';
+import { LFA_ZAPRACOVANI_OPTIONS, syncProjectStatusToSheet } from '@/lib/lfa-project-status';
 import { ProjectStatusBadges } from '@/components/project-status-badges';
 
 const TYPE_LABEL = {
@@ -133,17 +133,8 @@ export function ProjectDetailClient({ project }: { project: LFAProject }) {
                     }))
                   }
                 />
-                <span>Může jít do produkce</span>
+                <span>Publikovat</span>
               </label>
-            </div>
-
-            <div className="statusPreviewRow">
-              <span className={`statusBadge ${statusBadgeClass(formState.stavZapracovani)}`}>
-                {formState.stavZapracovani}
-              </span>
-              <span className={`statusBadge ${formState.muzeDoProdukce ? 'prodYes' : 'prodNo'}`}>
-                {formState.muzeDoProdukce ? 'Povoleno pro produkci' : 'Zatím ne do produkce'}
-              </span>
             </div>
 
             <div className="statusEditorActions">
