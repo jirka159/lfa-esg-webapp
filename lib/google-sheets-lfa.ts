@@ -50,8 +50,25 @@ function getEnv(name: string) {
 }
 
 function getPrivateKey() {
-  const key = process.env.GOOGLE_PRIVATE_KEY;
-  return key ? key.replace(/\\n/g, '\n') : null;
+  const raw = process.env.GOOGLE_PRIVATE_KEY;
+  if (!raw) return null;
+
+  let key = raw.trim();
+
+  if (
+    (key.startsWith('"') && key.endsWith('"')) ||
+    (key.startsWith("'") && key.endsWith("'"))
+  ) {
+    key = key.slice(1, -1);
+  }
+
+  key = key
+    .replace(/\\r/g, '')
+    .replace(/\\n/g, '\n')
+    .replace(/\r/g, '')
+    .trim();
+
+  return key;
 }
 
 export function getLfaSheetConfig() {
