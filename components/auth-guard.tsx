@@ -2,7 +2,7 @@
 
 import { ReactNode, useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { isBrowserAuthenticated } from '@/lib/auth-client';
+import { fetchCurrentSession } from '@/lib/auth-client';
 
 type Props = {
   children: ReactNode;
@@ -15,13 +15,25 @@ export function AuthGuard({ children }: Props) {
   const [authenticated, setAuthenticated] = useState(false);
 
   useEffect(() => {
-    const ok = isBrowserAuthenticated();
-    setAuthenticated(ok);
-    setReady(true);
+    let active = true;
 
-    if (!ok && pathname !== '/login') {
-      router.replace('/login');
+    async function validateSession() {
+      const session = await fetchCurrentSession();
+      if (!active) return;
+
+      setAuthenticated(session.authenticated);
+      setReady(true);
+
+      if (!session.authenticated && pathname !== '/login') {
+        router.replace('/login');
+      }
     }
+
+    void validateSession();
+
+    return () => {
+      active = false;
+    };
   }, [pathname, router]);
 
   if (!ready) {

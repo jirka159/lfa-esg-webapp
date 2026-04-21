@@ -1,7 +1,13 @@
-import { LFARoadmapSheetRow, LFARoadmapState, LFARoadmapYear, LFAProject, LFAProjectType } from '@/lib/types';
+import { LFARoadmapIdentity, LFARoadmapSheetRow, LFARoadmapState, LFARoadmapYear, LFAProject, LFAProjectType } from '@/lib/types';
 
 export const LFA_ROADMAP_YEARS = [2026, 2027, 2028, 2029, 2030] as const satisfies readonly LFARoadmapYear[];
 export const LFA_ROADMAP_MINIMUM_SECTIONS: readonly LFAProjectType[] = ['L', 'M', 'S'] as const;
+
+const DEFAULT_IDENTITY: LFARoadmapIdentity = {
+  planId: 'default',
+  clubId: 'LFA',
+  updatedBy: 'LFA admin'
+};
 
 export function createEmptyRoadmapPlan(): LFARoadmapState {
   return Object.fromEntries(LFA_ROADMAP_YEARS.map((year) => [year, [] as string[]])) as unknown as LFARoadmapState;
@@ -57,9 +63,14 @@ export function normalizeRoadmapState(input: unknown, projects: LFAProject[] = [
   return normalized;
 }
 
-export function roadmapStateToRows(plan: LFARoadmapState, actor = 'LFA admin', projects: LFAProject[] = []): LFARoadmapSheetRow[] {
+export function roadmapStateToRows(
+  plan: LFARoadmapState,
+  identity: Partial<LFARoadmapIdentity> = {},
+  projects: LFAProject[] = []
+): LFARoadmapSheetRow[] {
   const rows: LFARoadmapSheetRow[] = [];
   const projectMap = new Map(projects.map((project) => [project.id, project]));
+  const effectiveIdentity = { ...DEFAULT_IDENTITY, ...identity };
 
   for (const year of LFA_ROADMAP_YEARS) {
     const ids = dedupePreserveOrder(plan[year] ?? []);
@@ -69,14 +80,14 @@ export function roadmapStateToRows(plan: LFARoadmapState, actor = 'LFA admin', p
       const projectType = projectMap.get(projectId)?.type ?? guessProjectTypeFromId(projectId) ?? 'S';
       typeCounters[projectType] += 1;
       rows.push({
-        planId: 'default',
-        clubId: 'LFA',
+        planId: effectiveIdentity.planId,
+        clubId: effectiveIdentity.clubId,
         year,
         slotKey: `${projectType}${typeCounters[projectType]}`,
         slotLabel: buildSlotLabel(projectType, typeCounters[projectType]),
         projectType,
         projectId,
-        updatedBy: actor,
+        updatedBy: effectiveIdentity.updatedBy,
         updatedAt: new Date().toISOString()
       });
     }

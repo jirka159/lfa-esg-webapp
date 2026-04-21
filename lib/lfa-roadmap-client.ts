@@ -1,10 +1,10 @@
 import { LFARoadmapSavePayload, LFARoadmapState } from '@/lib/types';
 
-export async function syncRoadmapToSheet(plan: LFARoadmapState): Promise<LFARoadmapState> {
+export async function syncRoadmapToSheet(payload: LFARoadmapSavePayload): Promise<LFARoadmapState> {
   const response = await fetch('/api/lfa-roadmap', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ plan } satisfies LFARoadmapSavePayload)
+    body: JSON.stringify(payload)
   });
 
   const json = (await response.json().catch(() => ({}))) as { error?: string; plan?: LFARoadmapState };

@@ -2,6 +2,7 @@ import { createSign } from 'crypto';
 import { lfaProjects, lfaProjectsSeed } from '@/data/lfa-projects';
 import { createEmptyRoadmapPlan, normalizeRoadmapState, roadmapRowsToState, roadmapStateToRows } from '@/lib/lfa-roadmap';
 import {
+  LFARoadmapIdentity,
   LFARoadmapSavePayload,
   LFARoadmapSheetRow,
   LFARoadmapState,
@@ -52,6 +53,11 @@ const ROADMAP_HEADER_ROW = [
 ] as const;
 
 const STATUS_VALUES: LFAZapracovaniStatus[] = ['Idea', 'Připravuje se', 'Připraveno'];
+const DEFAULT_ROADMAP_IDENTITY: LFARoadmapIdentity = {
+  planId: 'default',
+  clubId: 'LFA',
+  updatedBy: 'LFA admin'
+};
 
 type SheetCredentials = {
   spreadsheetId: string;
@@ -258,9 +264,7 @@ function projectToSheetRow(project: LFAProject): string[] {
 }
 
 function rowToProject(row: string[], header: string[]): LFAProject | null {
-  const values = Object.fromEntries(
-    HEADER_ROW.map((column) => [column, row[header.indexOf(column)] ?? ''])
-  ) as SheetValues;
+  const values = Object.fromEntries(HEADER_ROW.map((column) => [column, row[header.indexOf(column)] ?? ''])) as SheetValues;
 
   if (!values['ID projektu'] || !values['Název projektu']) return null;
 
@@ -313,9 +317,7 @@ function roadmapRowToSheetRow(row: LFARoadmapSheetRow): string[] {
 }
 
 function rowToRoadmap(row: string[], header: string[]): LFARoadmapSheetRow | null {
-  const values = Object.fromEntries(
-    ROADMAP_HEADER_ROW.map((column) => [column, row[header.indexOf(column)] ?? ''])
-  ) as RoadmapSheetValues;
+  const values = Object.fromEntries(ROADMAP_HEADER_ROW.map((column) => [column, row[header.indexOf(column)] ?? ''])) as RoadmapSheetValues;
 
   const year = Number(values['Rok']) as LFARoadmapYear;
   if (!values['Plan ID'] || !values['Klub ID'] || !year || !values['Slot key']) return null;
@@ -328,7 +330,7 @@ function rowToRoadmap(row: string[], header: string[]): LFARoadmapSheetRow | nul
     slotLabel: values['Slot label'],
     projectType: (values['Typ projektu'] || 'S') as LFARoadmapSheetRow['projectType'],
     projectId: values['ID projektu'] || null,
-    updatedBy: values['Uložil'] || 'LFA admin',
+    updatedBy: values['Uložil'] || DEFAULT_ROADMAP_IDENTITY.updatedBy,
     updatedAt: values['Aktualizováno'] || ''
   };
 }
@@ -411,7 +413,10 @@ export async function fetchLfaProjectsFromSheet(): Promise<LFAProject[]> {
   }
 }
 
-export async function fetchLfaRoadmapFromSheet(projects?: LFAProject[]): Promise<LFARoadmapState> {
+export async function fetchLfaRoadmapFromSheet(
+  identity: Partial<LFARoadmapIdentity> = {},
+  projects?: LFAProject[]
+): Promise<LFARoadmapState> {
   if (!hasLfaSheetCredentials()) {
     return createEmptyRoadmapPlan();
   }
@@ -426,10 +431,11 @@ export async function fetchLfaRoadmapFromSheet(projects?: LFAProject[]): Promise
       return createEmptyRoadmapPlan();
     }
 
+    const effectiveIdentity = { ...DEFAULT_ROADMAP_IDENTITY, ...identity };
     const roadmapRows = rows
       .map((row) => rowToRoadmap(row, header))
       .filter((row): row is LFARoadmapSheetRow => Boolean(row))
-      .filter((row) => row.planId === 'default' && row.clubId === 'LFA');
+      .filter((row) => row.planId === effectiveIdentity.planId && row.clubId === effectiveIdentity.clubId);
 
     return roadmapRowsToState(roadmapRows, projects ?? []);
   } catch (error) {
@@ -465,12 +471,12 @@ export async function syncSeedProjectsToSheet(projects: LFAProject[] = lfaProjec
   return { count: projects.length };
 }
 
-export async function syncSeedRoadmapToSheet(plan?: LFARoadmapState) {
+export async function syncSeedRoadmapToSheet(plan?: LFARoadmapState, identity: Partial<LFARoadmapIdentity> = {}) {
   const credentials = requireLfaSheetCredentials();
   await ensureLfaRoadmapSheet();
   const values = [
     ROADMAP_HEADER_ROW as unknown as string[],
-    ...roadmapStateToRows(normalizeRoadmapState(plan ?? createEmptyRoadmapPlan()), 'LFA admin', lfaProjects).map(roadmapRowToSheetRow)
+    ...roadmapStateToRows(normalizeRoadmapState(plan ?? createEmptyRoadmapPlan()), { ...DEFAULT_ROADMAP_IDENTITY, ...identity }, lfaProjects).map(roadmapRowToSheetRow)
   ];
 
   await sheetsRequest(
@@ -490,8 +496,25 @@ export async function saveLfaRoadmapToSheet(payload: LFARoadmapSavePayload, proj
   await ensureLfaRoadmapSheet();
 
   const normalizedPlan = normalizeRoadmapState(payload.plan, projects);
-  const rows = roadmapStateToRows(normalizedPlan, 'LFA admin', projects).map(roadmapRowToSheetRow);
-  const values = [ROADMAP_HEADER_ROW as unknown as string[], ...rows];
+  const response = await getSheetValues(`${ROADMAP_SHEET_NAME}!A:I`, credentials);
+  const [header = [], ...rows] = response.values ?? [];
+  const effectiveIdentity = {
+    planId: payload.planId,
+    clubId: payload.clubId,
+    updatedBy: payload.updatedBy || DEFAULT_ROADMAP_IDENTITY.updatedBy
+  };
+
+  const preservedRows = rows
+    .map((row) => rowToRoadmap(row, header))
+    .filter((row): row is LFARoadmapSheetRow => Boolean(row))
+    .filter((row) => !(row.planId === effectiveIdentity.planId && row.clubId === effectiveIdentity.clubId));
+
+  const nextRows = [
+    ...preservedRows,
+    ...roadmapStateToRows(normalizedPlan, effectiveIdentity, projects)
+  ];
+
+  const values = [ROADMAP_HEADER_ROW as unknown as string[], ...nextRows.map(roadmapRowToSheetRow)];
 
   await sheetsRequest(
     `values/${encodeURIComponent(`${ROADMAP_SHEET_NAME}!A1:I${values.length}`)}?valueInputOption=RAW`,

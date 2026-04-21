@@ -6,6 +6,7 @@ import { lfaProjectCategories } from '@/data/lfa-projects';
 import { LFAProject, LFAProjectStatusUpdate } from '@/lib/types';
 import { LFA_ZAPRACOVANI_OPTIONS, syncProjectStatusToSheet } from '@/lib/lfa-project-status';
 import { ProjectStatusBadges } from '@/components/project-status-badges';
+import { type LFAUser } from '@/lib/lfa-users';
 
 const TYPE_LABEL = {
   L: 'Komplex',
@@ -31,7 +32,7 @@ function scoreLabel(score: number) {
   return 'Nižší';
 }
 
-export function ProjectDetailClient({ project }: { project: LFAProject }) {
+export function ProjectDetailClient({ project, currentUser }: { project: LFAProject; currentUser: LFAUser }) {
   const categoryMap = useMemo(
     () => Object.fromEntries(lfaProjectCategories.map((item) => [item.id, item.label])),
     []
@@ -66,7 +67,14 @@ export function ProjectDetailClient({ project }: { project: LFAProject }) {
           <Link href="/planner" className="secondaryButton projectBackLink">
             ← Zpět do katalogu
           </Link>
-          <div className={`detailBadge type${project.type}`}>{TYPE_LABEL[project.type]}</div>
+          <div className="detailTopbarMeta">
+            <div className="teamContextCard isCompact">
+              <span className="eyebrow">Přihlášený tým</span>
+              <strong>{currentUser.teamName}</strong>
+              <small>Uživatel {currentUser.username}</small>
+            </div>
+            <div className={`detailBadge type${project.type}`}>{TYPE_LABEL[project.type]}</div>
+          </div>
         </div>
 
         <header className="projectDetailHeader">

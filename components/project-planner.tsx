@@ -7,6 +7,7 @@ import { ProjectStatusBadges } from '@/components/project-status-badges';
 import { createEmptyRoadmapPlan, LFA_ROADMAP_MINIMUM_SECTIONS, LFA_ROADMAP_YEARS, normalizeRoadmapState } from '@/lib/lfa-roadmap';
 import { syncRoadmapToSheet } from '@/lib/lfa-roadmap-client';
 import { LFARoadmapState, LFARoadmapYear, LFAProject, LFAProjectCategory, LFAProjectType } from '@/lib/types';
+import { type LFAUser } from '@/lib/lfa-users';
 
 const TYPE_LABEL: Record<LFAProjectType, string> = {
   L: 'Komplex',
@@ -26,9 +27,10 @@ type Props = {
   projects: LFAProject[];
   categories: LFAProjectCategory[];
   initialPlan: LFARoadmapState;
+  currentUser: LFAUser;
 };
 
-export function ProjectPlanner({ projects, categories, initialPlan }: Props) {
+export function ProjectPlanner({ projects, categories, initialPlan, currentUser }: Props) {
   const [plan, setPlan] = useState<LFARoadmapState>(() => normalizeRoadmapState(initialPlan, projects));
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [query, setQuery] = useState('');
@@ -121,7 +123,12 @@ export function ProjectPlanner({ projects, categories, initialPlan }: Props) {
 
     startTransition(async () => {
       try {
-        const savedPlan = await syncRoadmapToSheet(normalizedPlan);
+        const savedPlan = await syncRoadmapToSheet({
+          plan: normalizedPlan,
+          planId: currentUser.planId,
+          clubId: currentUser.clubId,
+          updatedBy: `${currentUser.username} • ${currentUser.teamName}`
+        });
         setPlan(normalizeRoadmapState(savedPlan, projects));
         setSaveMessage(successMessage);
       } catch (error) {
@@ -175,8 +182,8 @@ export function ProjectPlanner({ projects, categories, initialPlan }: Props) {
     persistPlan(createEmptyRoadmapPlan(), 'Roadmapa byla resetovaná a uložená do Google Sheetu.');
   }
 
-  function handleLogout() {
-    logout();
+  async function handleLogout() {
+    await logout();
     window.location.href = '/login';
   }
 
@@ -230,6 +237,11 @@ export function ProjectPlanner({ projects, categories, initialPlan }: Props) {
   return (
     <>
       <div className="boardActions boardActionsTop">
+        <div className="teamContextCard">
+          <span className="eyebrow">Přihlášený tým</span>
+          <strong>{currentUser.teamName}</strong>
+          <small>Uživatel {currentUser.username} · oddělený plán {currentUser.planId}</small>
+        </div>
         <button className="secondaryButton" type="button" onClick={resetBoard} disabled={isPending}>
           Resetovat roadmapu
         </button>
@@ -242,10 +254,10 @@ export function ProjectPlanner({ projects, categories, initialPlan }: Props) {
         <div className="sectionHeading sectionHeadingRoadmap">
           <div>
             <span className="eyebrow">Roadmapa 2026–2030</span>
-            <h2>Strategický board priorit LFA</h2>
+            <h2>Strategický board priorit pro {currentUser.teamName}</h2>
             <p className="sectionLead">
-              Projekty stačí přetáhnout na sloupec roku. Planner je automaticky zařadí do správné sekce podle
-              komplexity a dovolí přidat více aktivit stejného typu.
+              Projekty stačí přetáhnout na sloupec roku. Každý tým pracuje se svým vlastním odděleným plánem,
+              katalog projektů zůstává společný.
             </p>
             {saveMessage ? <p className="syncMessage">{saveMessage}</p> : null}
           </div>
@@ -360,7 +372,7 @@ export function ProjectPlanner({ projects, categories, initialPlan }: Props) {
           <div className="sectionHeading">
             <div>
               <span className="eyebrow">Katalog opatření</span>
-              <h2>Projekty z podkladového Excelu</h2>
+              <h2>Společný katalog projektů</h2>
             </div>
             <div className="panelStatBadge">{projects.length} projektů</div>
           </div>
@@ -415,7 +427,6 @@ export function ProjectPlanner({ projects, categories, initialPlan }: Props) {
           </div>
         </section>
       </section>
-
     </>
   );
 

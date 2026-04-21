@@ -2,11 +2,12 @@
 
 import { FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { loginWithCredentials, isBrowserAuthenticated } from '@/lib/auth-client';
+import { isBrowserAuthenticated, loginWithCredentials } from '@/lib/auth-client';
+import { LFA_USERS } from '@/lib/lfa-users';
 
 export function LoginForm() {
   const router = useRouter();
-  const [username, setUsername] = useState('LFA Admin');
+  const [username, setUsername] = useState('JZL');
   const [password, setPassword] = useState('heslo');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -16,15 +17,16 @@ export function LoginForm() {
     setLoading(true);
     setError('');
 
-    const ok = loginWithCredentials(username, password);
+    const result = await loginWithCredentials(username, password);
 
-    if (!ok) {
-      setError('Nesprávné uživatelské jméno nebo heslo');
+    if (!result.ok) {
+      setError(result.error ?? 'Nesprávné uživatelské jméno nebo heslo.');
       setLoading(false);
       return;
     }
 
     router.push('/planner');
+    router.refresh();
   }
 
   if (isBrowserAuthenticated()) {
@@ -37,12 +39,12 @@ export function LoginForm() {
       <div>
         <span className="eyebrow">LFA ESG plánovač</span>
         <h1>Přihlášení</h1>
-        <p className="muted">MVP přístup pro interní plánování. Použijte předpřipravené administrátorské údaje.</p>
+        <p className="muted">Přihlaste se do svého týmového planneru. Každý účet má vlastní oddělenou roadmapu.</p>
       </div>
 
       <label className="field">
         <span>Uživatelské jméno</span>
-        <input value={username} onChange={(event) => setUsername(event.target.value)} />
+        <input value={username} onChange={(event) => setUsername(event.target.value.toUpperCase())} />
       </label>
 
       <label className="field">
@@ -57,11 +59,19 @@ export function LoginForm() {
       {error ? <div className="errorBox">{error}</div> : null}
 
       <button className="primaryButton" disabled={loading} type="submit">
-        {loading ? 'Přihlašování…' : 'Vstoupit do plánovače'}
+        {loading ? 'Přihlašování…' : 'Vstoupit do planneru'}
       </button>
 
       <div className="loginHint">
-        <strong>Demo přihlášení pro MVP:</strong> LFA Admin / heslo
+        <strong>Dostupné účty:</strong>
+        <ul className="loginAccountsList">
+          {LFA_USERS.map((user) => (
+            <li key={user.id}>
+              <code>{user.username}</code> — {user.teamName}
+            </li>
+          ))}
+        </ul>
+        <div>Heslo pro všechny účty: <code>heslo</code></div>
       </div>
     </form>
   );

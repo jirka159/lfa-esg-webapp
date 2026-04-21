@@ -79,6 +79,15 @@ export type LFARoadmapSheetRow = {
   updatedAt: string;
 };
 
+export type LFARoadmapIdentity = {
+  planId: string;
+  clubId: string;
+  updatedBy: string;
+};
+
 export type LFARoadmapSavePayload = {
   plan: LFARoadmapState;
+  planId: string;
+  clubId: string;
+  updatedBy: string;
 };
