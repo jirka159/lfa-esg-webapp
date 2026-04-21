@@ -94,9 +94,9 @@ button, input, select { font: inherit; }
 .yearSections { display: grid; gap: 10px; }
 .timelineGroup { min-height: 120px; border-radius: 22px; border: 1px dashed var(--line-strong); padding: 12px; background: rgba(255,255,255,.65); display: grid; gap: 10px; align-content: start; }
 .timelineGroupHeading { align-items: center; }
-.timelineGroupBody { display: grid; gap: 10px; align-content: start; min-height: 48px; }
+.timelineGroupBody { display: grid; gap: 10px; align-content: start; min-height: 48px; grid-auto-rows: max-content; }
 .slotTopline { display: flex; justify-content: space-between; gap: 8px; color: var(--ink-soft); }
-.slotProjectCard, .catalogChip { display: grid; gap: 8px; width: 100%; text-align: left; border-radius: 18px; border: 1px solid var(--line); padding: 14px; background: #fff; position: relative; }
+.slotProjectCard, .catalogChip { display: grid; gap: 8px; width: 100%; text-align: left; border-radius: 18px; border: 1px solid var(--line); padding: 14px; background: #fff; position: relative; align-content: start; min-height: 132px; }
 .slotProjectMeta, .catalogChipTop { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
 .slotProjectCategory, .catalogChip small { color: var(--ink-soft); }
 .slotProjectCard.isSelected, .catalogChip.isSelected { box-shadow: inset 0 0 0 2px rgba(29,34,65,.12); }
@@ -118,14 +118,14 @@ button, input, select { font: inherit; }
 .typeColumnBody { gap: 10px; align-content: start; grid-auto-rows: max-content; }
 .catalogChip.isAssigned { opacity: .7; }
 .projectStatusBadges { margin-top: 4px; }
-.projectStatusBadges.isCompact { margin-top: 0; }
-.projectStatusBadges.isCompact .statusBadge { font-size: .68rem; padding: 6px 10px; }
+.projectStatusBadges.isCompact { margin-top: 0; gap: 6px; }
+.projectStatusBadges.isCompact .statusBadge { font-size: .64rem; padding: 4px 8px; font-weight: 600; border-width: 0; }
 .statusBadge { background: #f4f7fa; color: var(--ink); border-color: var(--line); }
-.statusIdea { background: #fff1d8; color: #8a5a00; border-color: #f0cf8c; }
-.statusPreparing { background: #e8f1ff; color: #1d5eb7; border-color: #bfd4ff; }
-.statusReady { background: #e8f8ec; color: #207447; border-color: #b5e0c3; }
-.prodYes { background: #ebf8ef; color: #1f7d46; border-color: #bde4c9; }
-.prodNo { background: #f7edf0; color: #8a3f56; border-color: #e7c1ce; }
+.statusIdea { background: #fff6df; color: #8a5a00; border-color: transparent; }
+.statusPreparing { background: #eef5ff; color: #1d5eb7; border-color: transparent; }
+.statusReady { background: #edf9f1; color: #207447; border-color: transparent; }
+.prodYes { background: #eef8f1; color: #1f7d46; border-color: transparent; }
+.prodNo { background: #fbf2f4; color: #8a3f56; border-color: transparent; }
 .projectDetailPage { max-width: 1120px; }
 .projectDetailTopbar { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
 .projectDetailHeader { display: grid; gap: 14px; }
