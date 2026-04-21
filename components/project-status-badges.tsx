@@ -13,7 +13,7 @@ export function ProjectStatusBadges({ project, compact = false }: Props) {
         Stav: {project.stavZapracovani}
       </span>
       <span className={`statusBadge ${project.muzeDoProdukce ? 'prodYes' : 'prodNo'}`}>
-        Produkce: {project.muzeDoProdukce ? 'Ano' : 'Ne'}
+        Publikovat: {project.muzeDoProdukce ? 'Ano' : 'Ne'}
       </span>
     </div>
   );
