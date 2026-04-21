@@ -1,12 +1,13 @@
 import { AuthGuard } from '@/components/auth-guard';
 import { ProjectPlannerClient } from '@/components/project-planner-client';
 import { lfaProjectCategories } from '@/data/lfa-projects';
-import { fetchLfaProjectsFromSheet } from '@/lib/google-sheets-lfa';
+import { fetchLfaProjectsFromSheet, fetchLfaRoadmapFromSheet } from '@/lib/google-sheets-lfa';
 
 export const dynamic = 'force-dynamic';
 
 export default async function PlannerPage() {
   const projects = await fetchLfaProjectsFromSheet();
+  const initialPlan = await fetchLfaRoadmapFromSheet(projects);
 
   return (
     <AuthGuard>
@@ -51,7 +52,7 @@ export default async function PlannerPage() {
           </div>
         </header>
 
-        <ProjectPlannerClient projects={projects} categories={lfaProjectCategories} />
+        <ProjectPlannerClient projects={projects} categories={lfaProjectCategories} initialPlan={initialPlan} />
       </main>
     </AuthGuard>
   );

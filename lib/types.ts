@@ -61,3 +61,24 @@ export type LFAProject = {
 };
 
 export type LFAProjectStatusUpdate = Pick<LFAProject, 'id' | 'stavZapracovani' | 'muzeDoProdukce'>;
+
+export type LFARoadmapYear = 2026 | 2027 | 2028 | 2029 | 2030;
+export type LFARoadmapSlotKey = 'L' | 'M' | 'S1' | 'S2';
+export type LFARoadmapYearPlan = Record<LFARoadmapSlotKey, string | null>;
+export type LFARoadmapState = Record<LFARoadmapYear, LFARoadmapYearPlan>;
+
+export type LFARoadmapSheetRow = {
+  planId: string;
+  clubId: string;
+  year: LFARoadmapYear;
+  slotKey: LFARoadmapSlotKey;
+  slotLabel: string;
+  projectType: LFAProjectType;
+  projectId: string | null;
+  updatedBy: string;
+  updatedAt: string;
+};
+
+export type LFARoadmapSavePayload = {
+  plan: LFARoadmapState;
+};

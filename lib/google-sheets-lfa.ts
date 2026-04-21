@@ -1,8 +1,18 @@
 import { createSign } from 'crypto';
 import { lfaProjects, lfaProjectsSeed } from '@/data/lfa-projects';
-import { LFAProject, LFAProjectStatusUpdate, LFAZapracovaniStatus } from '@/lib/types';
+import { createEmptyRoadmapPlan, normalizeRoadmapState, roadmapRowsToState, roadmapStateToRows } from '@/lib/lfa-roadmap';
+import {
+  LFARoadmapSavePayload,
+  LFARoadmapSheetRow,
+  LFARoadmapState,
+  LFARoadmapYear,
+  LFAProject,
+  LFAProjectStatusUpdate,
+  LFAZapracovaniStatus
+} from '@/lib/types';
 
 const SHEET_NAME = 'Projekty';
+const ROADMAP_SHEET_NAME = 'Plany_klubu';
 const HEADER_ROW = [
   'ID projektu',
   'Název projektu',
@@ -29,6 +39,17 @@ const HEADER_ROW = [
   'Může do produkce',
   'Aktualizováno'
 ] as const;
+const ROADMAP_HEADER_ROW = [
+  'Plan ID',
+  'Klub ID',
+  'Rok',
+  'Slot key',
+  'Slot label',
+  'Typ projektu',
+  'ID projektu',
+  'Uložil',
+  'Aktualizováno'
+] as const;
 
 const STATUS_VALUES: LFAZapracovaniStatus[] = ['Idea', 'Připravuje se', 'Připraveno'];
 
@@ -43,6 +64,7 @@ type ValueRangeResponse = {
 };
 
 type SheetValues = Record<(typeof HEADER_ROW)[number], string>;
+type RoadmapSheetValues = Record<(typeof ROADMAP_HEADER_ROW)[number], string>;
 
 function getEnv(name: string) {
   const value = process.env[name]?.trim();
@@ -55,18 +77,11 @@ function getPrivateKey() {
 
   let key = raw.trim();
 
-  if (
-    (key.startsWith('"') && key.endsWith('"')) ||
-    (key.startsWith("'") && key.endsWith("'"))
-  ) {
+  if ((key.startsWith('"') && key.endsWith('"')) || (key.startsWith("'") && key.endsWith("'"))) {
     key = key.slice(1, -1);
   }
 
-  key = key
-    .replace(/\\r/g, '')
-    .replace(/\\n/g, '\n')
-    .replace(/\r/g, '')
-    .trim();
+  key = key.replace(/\\r/g, '').replace(/\\n/g, '\n').replace(/\r/g, '').trim();
 
   return key;
 }
@@ -244,7 +259,7 @@ function projectToSheetRow(project: LFAProject): string[] {
 
 function rowToProject(row: string[], header: string[]): LFAProject | null {
   const values = Object.fromEntries(
-    HEADER_ROW.map((column, index) => [column, row[header.indexOf(column)] ?? ''])
+    HEADER_ROW.map((column) => [column, row[header.indexOf(column)] ?? ''])
   ) as SheetValues;
 
   if (!values['ID projektu'] || !values['Název projektu']) return null;
@@ -283,16 +298,51 @@ function rowToProject(row: string[], header: string[]): LFAProject | null {
   };
 }
 
+function roadmapRowToSheetRow(row: LFARoadmapSheetRow): string[] {
+  return [
+    row.planId,
+    row.clubId,
+    String(row.year),
+    row.slotKey,
+    row.slotLabel,
+    row.projectType,
+    row.projectId ?? '',
+    row.updatedBy,
+    row.updatedAt
+  ];
+}
+
+function rowToRoadmap(row: string[], header: string[]): LFARoadmapSheetRow | null {
+  const values = Object.fromEntries(
+    ROADMAP_HEADER_ROW.map((column) => [column, row[header.indexOf(column)] ?? ''])
+  ) as RoadmapSheetValues;
+
+  const year = Number(values['Rok']) as LFARoadmapYear;
+  if (!values['Plan ID'] || !values['Klub ID'] || !year || !values['Slot key']) return null;
+
+  return {
+    planId: values['Plan ID'],
+    clubId: values['Klub ID'],
+    year,
+    slotKey: values['Slot key'] as LFARoadmapSheetRow['slotKey'],
+    slotLabel: values['Slot label'],
+    projectType: (values['Typ projektu'] || 'S') as LFARoadmapSheetRow['projectType'],
+    projectId: values['ID projektu'] || null,
+    updatedBy: values['Uložil'] || 'LFA admin',
+    updatedAt: values['Aktualizováno'] || ''
+  };
+}
+
 async function getSheetValues(range: string, credentials: SheetCredentials) {
   return sheetsRequest<ValueRangeResponse>(`values/${encodeURIComponent(range)}`, { method: 'GET' }, credentials);
 }
 
-export async function ensureLfaProjectsSheet() {
+async function ensureSheetWithHeader(sheetName: string, headerRow: readonly string[]) {
   const credentials = requireLfaSheetCredentials();
 
   let existingHeader: string[] = [];
   try {
-    const response = await getSheetValues(`${SHEET_NAME}!1:1`, credentials);
+    const response = await getSheetValues(`${sheetName}!1:1`, credentials);
     existingHeader = response.values?.[0] ?? [];
   } catch {
     await batchUpdate(
@@ -300,7 +350,7 @@ export async function ensureLfaProjectsSheet() {
         {
           addSheet: {
             properties: {
-              title: SHEET_NAME
+              title: sheetName
             }
           }
         }
@@ -309,14 +359,15 @@ export async function ensureLfaProjectsSheet() {
     );
   }
 
-  const mergedHeader = [...HEADER_ROW].filter(Boolean);
+  const mergedHeader = [...headerRow].filter(Boolean);
   const headerChanged =
     existingHeader.length !== mergedHeader.length ||
     mergedHeader.some((value, index) => existingHeader[index] !== value);
 
   if (headerChanged) {
+    const lastColumnLetter = String.fromCharCode(64 + mergedHeader.length);
     await sheetsRequest(
-      `values/${encodeURIComponent(`${SHEET_NAME}!A1:X1`)}?valueInputOption=RAW`,
+      `values/${encodeURIComponent(`${sheetName}!A1:${lastColumnLetter}1`)}?valueInputOption=RAW`,
       {
         method: 'PUT',
         body: JSON.stringify({ values: [mergedHeader] })
@@ -324,6 +375,16 @@ export async function ensureLfaProjectsSheet() {
       credentials
     );
   }
+
+  return credentials;
+}
+
+export async function ensureLfaProjectsSheet() {
+  await ensureSheetWithHeader(SHEET_NAME, HEADER_ROW);
+}
+
+export async function ensureLfaRoadmapSheet() {
+  await ensureSheetWithHeader(ROADMAP_SHEET_NAME, ROADMAP_HEADER_ROW);
 }
 
 export async function fetchLfaProjectsFromSheet(): Promise<LFAProject[]> {
@@ -341,14 +402,39 @@ export async function fetchLfaProjectsFromSheet(): Promise<LFAProject[]> {
       return lfaProjects;
     }
 
-    const projects = rows
-      .map((row) => rowToProject(row, header))
-      .filter((project): project is LFAProject => Boolean(project));
+    const projects = rows.map((row) => rowToProject(row, header)).filter((project): project is LFAProject => Boolean(project));
 
     return projects.length ? projects : lfaProjects;
   } catch (error) {
     console.error('fetchLfaProjectsFromSheet fallback:', error);
     return lfaProjects;
+  }
+}
+
+export async function fetchLfaRoadmapFromSheet(projects?: LFAProject[]): Promise<LFARoadmapState> {
+  if (!hasLfaSheetCredentials()) {
+    return createEmptyRoadmapPlan();
+  }
+
+  try {
+    const credentials = requireLfaSheetCredentials();
+    await ensureLfaRoadmapSheet();
+    const response = await getSheetValues(`${ROADMAP_SHEET_NAME}!A:I`, credentials);
+    const [header = [], ...rows] = response.values ?? [];
+
+    if (!header.length || rows.length === 0) {
+      return createEmptyRoadmapPlan();
+    }
+
+    const roadmapRows = rows
+      .map((row) => rowToRoadmap(row, header))
+      .filter((row): row is LFARoadmapSheetRow => Boolean(row))
+      .filter((row) => row.planId === 'default' && row.clubId === 'LFA');
+
+    return roadmapRowsToState(roadmapRows, projects ?? []);
+  } catch (error) {
+    console.error('fetchLfaRoadmapFromSheet fallback:', error);
+    return createEmptyRoadmapPlan();
   }
 }
 
@@ -379,6 +465,46 @@ export async function syncSeedProjectsToSheet(projects: LFAProject[] = lfaProjec
   return { count: projects.length };
 }
 
+export async function syncSeedRoadmapToSheet(plan?: LFARoadmapState) {
+  const credentials = requireLfaSheetCredentials();
+  await ensureLfaRoadmapSheet();
+  const values = [
+    ROADMAP_HEADER_ROW as unknown as string[],
+    ...roadmapStateToRows(normalizeRoadmapState(plan ?? createEmptyRoadmapPlan())).map(roadmapRowToSheetRow)
+  ];
+
+  await sheetsRequest(
+    `values/${encodeURIComponent(`${ROADMAP_SHEET_NAME}!A1:I${values.length}`)}?valueInputOption=RAW`,
+    {
+      method: 'PUT',
+      body: JSON.stringify({ values })
+    },
+    credentials
+  );
+
+  return { count: values.length - 1 };
+}
+
+export async function saveLfaRoadmapToSheet(payload: LFARoadmapSavePayload, projects: LFAProject[] = []) {
+  const credentials = requireLfaSheetCredentials();
+  await ensureLfaRoadmapSheet();
+
+  const normalizedPlan = normalizeRoadmapState(payload.plan, projects);
+  const rows = roadmapStateToRows(normalizedPlan).map(roadmapRowToSheetRow);
+  const values = [ROADMAP_HEADER_ROW as unknown as string[], ...rows];
+
+  await sheetsRequest(
+    `values/${encodeURIComponent(`${ROADMAP_SHEET_NAME}!A1:I${values.length}`)}?valueInputOption=RAW`,
+    {
+      method: 'PUT',
+      body: JSON.stringify({ values })
+    },
+    credentials
+  );
+
+  return normalizedPlan;
+}
+
 export async function upsertLfaProjectStatus(update: LFAProjectStatusUpdate) {
   const credentials = requireLfaSheetCredentials();
   await ensureLfaProjectsSheet();
@@ -405,9 +531,8 @@ export async function upsertLfaProjectStatus(update: LFAProjectStatusUpdate) {
   currentRow[prodIndex] = update.muzeDoProdukce ? 'Ano' : 'Ne';
   currentRow[updatedIndex] = new Date().toISOString();
 
-  const lastColumnLetter = 'X';
   await sheetsRequest(
-    `values/${encodeURIComponent(`${SHEET_NAME}!A${absoluteRow}:${lastColumnLetter}${absoluteRow}`)}?valueInputOption=RAW`,
+    `values/${encodeURIComponent(`${SHEET_NAME}!A${absoluteRow}:X${absoluteRow}`)}?valueInputOption=RAW`,
     {
       method: 'PUT',
       body: JSON.stringify({ values: [currentRow] })
@@ -417,4 +542,5 @@ export async function upsertLfaProjectStatus(update: LFAProjectStatusUpdate) {
 }
 
 export const lfaSheetHeaderRow = HEADER_ROW;
+export const lfaRoadmapSheetHeaderRow = ROADMAP_HEADER_ROW;
 export const lfaProjectsSeedForSheet = lfaProjectsSeed;

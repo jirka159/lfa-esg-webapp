@@ -1,28 +1,12 @@
 "use client";
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState, type DragEvent } from 'react';
+import { useMemo, useState, useTransition, type DragEvent } from 'react';
 import { logout } from '@/lib/auth-client';
 import { ProjectStatusBadges } from '@/components/project-status-badges';
-import { LFAProject, LFAProjectCategory, LFAProjectType } from '@/lib/types';
-
-const YEARS = [2026, 2027, 2028, 2029, 2030] as const;
-const STORAGE_KEY = 'lfa-esg-roadmap-v2';
-const SLOT_DEFS = [
-  { key: 'L', label: 'Komplex', type: 'L' as const },
-  { key: 'M', label: 'Standard', type: 'M' as const },
-  { key: 'S1', label: 'Easy win 1', type: 'S' as const },
-  { key: 'S2', label: 'Easy win 2', type: 'S' as const }
-] as const;
-
-type SlotKey = (typeof SLOT_DEFS)[number]['key'];
-type YearPlan = Record<SlotKey, string | null>;
-type PlannerState = Record<(typeof YEARS)[number], YearPlan>;
-
-type Props = {
-  projects: LFAProject[];
-  categories: LFAProjectCategory[];
-};
+import { createEmptyRoadmapPlan, LFA_ROADMAP_SLOTS, LFA_ROADMAP_YEARS, normalizeRoadmapState } from '@/lib/lfa-roadmap';
+import { syncRoadmapToSheet } from '@/lib/lfa-roadmap-client';
+import { LFARoadmapSlotKey, LFARoadmapState, LFARoadmapYear, LFAProject, LFAProjectCategory, LFAProjectType } from '@/lib/types';
 
 const TYPE_LABEL: Record<LFAProjectType, string> = {
   L: 'Komplex',
@@ -36,32 +20,21 @@ const TYPE_CLASS: Record<LFAProjectType, string> = {
   S: 'typeS'
 };
 
-function createInitialPlan(): PlannerState {
-  return Object.fromEntries(
-    YEARS.map((year) => [year, { L: null, M: null, S1: null, S2: null }])
-  ) as PlannerState;
-}
+type Props = {
+  projects: LFAProject[];
+  categories: LFAProjectCategory[];
+  initialPlan: LFARoadmapState;
+};
 
-export function ProjectPlanner({ projects, categories }: Props) {
-  const [plan, setPlan] = useState<PlannerState>(createInitialPlan);
+export function ProjectPlanner({ projects, categories, initialPlan }: Props) {
+  const [plan, setPlan] = useState<LFARoadmapState>(() => normalizeRoadmapState(initialPlan, projects));
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [query, setQuery] = useState('');
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [activeDropzone, setActiveDropzone] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string>(projects[0]?.id ?? '');
-
-  useEffect(() => {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return;
-    try {
-      const parsed = JSON.parse(raw) as PlannerState;
-      if (parsed) setPlan(parsed);
-    } catch {}
-  }, []);
-
-  useEffect(() => {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(plan));
-  }, [plan]);
+  const [saveMessage, setSaveMessage] = useState('');
+  const [isPending, startTransition] = useTransition();
 
   const categoryMap = useMemo(
     () => Object.fromEntries(categories.map((category) => [category.id, category.label])),
@@ -106,46 +79,76 @@ export function ProjectPlanner({ projects, categories }: Props) {
     return groups;
   }, [filteredProjects]);
 
-  function handleDrop(year: (typeof YEARS)[number], slotKey: SlotKey) {
-    if (!draggedId) return;
-    const project = projectMap[draggedId];
-    if (!project) return;
+  function persistPlan(nextPlan: LFARoadmapState, successMessage = 'Roadmapa byla uložená do Google Sheetu.') {
+    const previousPlan = plan;
+    const normalizedPlan = normalizeRoadmapState(nextPlan, projects);
+    setPlan(normalizedPlan);
+    setSaveMessage('Ukládám roadmapu do Google Sheetu…');
 
-    const slotDef = SLOT_DEFS.find((slot) => slot.key === slotKey);
-    if (!slotDef || slotDef.type !== project.type) return;
+    startTransition(async () => {
+      try {
+        const savedPlan = await syncRoadmapToSheet(normalizedPlan);
+        setPlan(normalizeRoadmapState(savedPlan, projects));
+        setSaveMessage(successMessage);
+      } catch (error) {
+        setPlan(previousPlan);
+        const message = error instanceof Error ? error.message : 'Nepodařilo se uložit roadmapu.';
+        setSaveMessage(message);
+      }
+    });
+  }
 
-    setPlan((current) => {
-      const next = structuredClone(current) as PlannerState;
+  function buildPlanWithPlacement(projectId: string, year: LFARoadmapYear, slotKey: LFARoadmapSlotKey) {
+    const next = structuredClone(plan) as LFARoadmapState;
 
-      for (const planYear of YEARS) {
-        for (const key of Object.keys(next[planYear]) as SlotKey[]) {
-          if (next[planYear][key] === draggedId) next[planYear][key] = null;
+    for (const planYear of LFA_ROADMAP_YEARS) {
+      for (const slot of LFA_ROADMAP_SLOTS) {
+        if (next[planYear][slot.key] === projectId) {
+          next[planYear][slot.key] = null;
         }
       }
+    }
 
-      next[year][slotKey] = draggedId;
-      return next;
-    });
+    next[year][slotKey] = projectId;
+    return next;
+  }
 
-    setSelectedId(draggedId);
+  function getDraggedProject(event?: DragEvent<HTMLElement>) {
+    const eventProjectId = event?.dataTransfer?.getData('text/plain') || '';
+    const projectId = eventProjectId || draggedId;
+    return projectId ? projectMap[projectId] : undefined;
+  }
+
+  function handleDrop(event: DragEvent<HTMLDivElement>, year: LFARoadmapYear, slotKey: LFARoadmapSlotKey) {
+    event.preventDefault();
+
+    const projectId = event.dataTransfer.getData('text/plain') || draggedId;
+    if (!projectId) return;
+
+    const project = projectMap[projectId];
+    const slotDef = LFA_ROADMAP_SLOTS.find((slot) => slot.key === slotKey);
+    if (!project || !slotDef || slotDef.type !== project.type) return;
+
+    persistPlan(buildPlanWithPlacement(projectId, year, slotKey));
+    setSelectedId(projectId);
     setDraggedId(null);
     setActiveDropzone(null);
   }
 
-  function clearSlot(year: (typeof YEARS)[number], slotKey: SlotKey) {
-    setPlan((current) => ({
-      ...current,
+  function clearSlot(year: LFARoadmapYear, slotKey: LFARoadmapSlotKey) {
+    const nextPlan = {
+      ...plan,
       [year]: {
-        ...current[year],
+        ...plan[year],
         [slotKey]: null
       }
-    }));
+    };
+
+    persistPlan(nextPlan, 'Roadmapa byla aktualizovaná v Google Sheetu.');
   }
 
   function resetBoard() {
-    const initial = createInitialPlan();
-    setPlan(initial);
-    window.localStorage.removeItem(STORAGE_KEY);
+    persistPlan(createEmptyRoadmapPlan(), 'Roadmapa byla resetovaná a uložená do Google Sheetu.');
   }
 
   function handleLogout() {
@@ -156,7 +159,7 @@ export function ProjectPlanner({ projects, categories }: Props) {
   return (
     <>
       <div className="boardActions boardActionsTop">
-        <button className="secondaryButton" type="button" onClick={resetBoard}>
+        <button className="secondaryButton" type="button" onClick={resetBoard} disabled={isPending}>
           Resetovat roadmapu
         </button>
         <button className="secondaryButton" type="button" onClick={handleLogout}>
@@ -172,6 +175,7 @@ export function ProjectPlanner({ projects, categories }: Props) {
             <p className="sectionLead">
               Každý rok funguje jako plánovací sloupec. Do slotů přiřazuj projekty z katalogu a skládej víceletou ESG roadmapu.
             </p>
+            {saveMessage ? <p className="syncMessage">{saveMessage}</p> : null}
           </div>
           <div className="timelineStats">
             <div className="miniStat">
@@ -195,7 +199,7 @@ export function ProjectPlanner({ projects, categories }: Props) {
         </div>
 
         <div className="timelineGrid">
-          {YEARS.map((year) => (
+          {LFA_ROADMAP_YEARS.map((year) => (
             <article className="yearColumn" key={year}>
               <div className="yearHeading">
                 <span className="yearLabel">Sezóna</span>
@@ -203,7 +207,7 @@ export function ProjectPlanner({ projects, categories }: Props) {
               </div>
 
               <div className="yearSlots">
-                {SLOT_DEFS.map((slot) => {
+                {LFA_ROADMAP_SLOTS.map((slot) => {
                   const projectId = plan[year][slot.key];
                   const project = projectId ? projectMap[projectId] : null;
                   const isActive = activeDropzone === `${year}-${slot.key}`;
@@ -213,16 +217,14 @@ export function ProjectPlanner({ projects, categories }: Props) {
                       key={slot.key}
                       className={`timelineSlot ${TYPE_CLASS[slot.type]} ${isActive ? 'isActive' : ''} ${project ? 'hasProject' : ''}`}
                       onDragOver={(event) => {
-                        const dragged = draggedId ? projectMap[draggedId] : undefined;
-                        if (!dragged || dragged.type !== slot.type) return;
+                        const draggedProject = getDraggedProject(event);
+                        if (!draggedProject || draggedProject.type !== slot.type) return;
                         event.preventDefault();
+                        event.dataTransfer.dropEffect = 'move';
                         setActiveDropzone(`${year}-${slot.key}`);
                       }}
                       onDragLeave={() => setActiveDropzone((current) => (current === `${year}-${slot.key}` ? null : current))}
-                      onDrop={(event) => {
-                        event.preventDefault();
-                        handleDrop(year, slot.key);
-                      }}
+                      onDrop={(event) => handleDrop(event, year, slot.key)}
                     >
                       <div className="slotTopline">
                         <span>{slot.label}</span>
@@ -232,10 +234,31 @@ export function ProjectPlanner({ projects, categories }: Props) {
                       {project ? (
                         <button
                           type="button"
+                          draggable
                           className={`slotProjectCard ${TYPE_CLASS[project.type]}`}
+                          onDragStart={(event) => {
+                            event.dataTransfer.effectAllowed = 'move';
+                            event.dataTransfer.setData('text/plain', project.id);
+                            setDraggedId(project.id);
+                            setSelectedId(project.id);
+                          }}
+                          onDragEnd={() => {
+                            setDraggedId(null);
+                            setActiveDropzone(null);
+                          }}
                           onClick={() => setSelectedId(project.id)}
                         >
-                          <span className="slotProjectMeta">{project.id}</span>
+                          <span className="slotProjectMeta">
+                            <span>{project.id}</span>
+                            <Link
+                              href={`/planner/${encodeURIComponent(project.id)}`}
+                              className="slotProjectDetailLink"
+                              draggable={false}
+                              onClick={(event) => event.stopPropagation()}
+                            >
+                              Detail →
+                            </Link>
+                          </span>
                           <strong>{project.name}</strong>
                           <span className="slotProjectCategory">{categoryMap[project.cat]}</span>
                           <ProjectStatusBadges project={project} compact />
@@ -341,7 +364,13 @@ export function ProjectPlanner({ projects, categories }: Props) {
           setDraggedId(null);
           setActiveDropzone(null);
         }}
-        onClick={() => setSelectedId(project.id)}
+        onClick={(event) => {
+          if (draggedId) {
+            event.preventDefault();
+            return;
+          }
+          setSelectedId(project.id);
+        }}
         className={`catalogChip ${TYPE_CLASS[project.type]} ${assigned ? 'isAssigned' : ''} ${selectedId === project.id ? 'isSelected' : ''}`}
       >
         <span className="catalogChipTop">

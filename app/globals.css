@@ -96,6 +96,8 @@ button, input, select { font: inherit; }
 .slotProjectCard, .catalogChip { display: grid; gap: 8px; width: 100%; text-align: left; border-radius: 18px; border: 1px solid var(--line); padding: 14px; background: #fff; position: relative; }
 .slotProjectMeta, .catalogChipTop { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
 .slotProjectCategory, .catalogChip small { color: var(--ink-soft); }
+.slotProjectDetailLink { font-size: .78rem; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .08em; }
+.slotProjectDetailLink:hover { color: var(--ink); }
 .slotRemove { position: absolute; right: 12px; top: 12px; font-size: 1.1rem; }
 .slotPlaceholder { color: var(--ink-soft); font-size: .92rem; }
 .plannerLayout { margin-top: 20px; }
