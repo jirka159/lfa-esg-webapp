@@ -331,25 +331,35 @@ export async function fetchLfaProjectsFromSheet(): Promise<LFAProject[]> {
     return lfaProjects;
   }
 
-  const credentials = requireLfaSheetCredentials();
-  await ensureLfaProjectsSheet();
-  const response = await getSheetValues(`${SHEET_NAME}!A:X`, credentials);
-  const [header = [], ...rows] = response.values ?? [];
+  try {
+    const credentials = requireLfaSheetCredentials();
+    await ensureLfaProjectsSheet();
+    const response = await getSheetValues(`${SHEET_NAME}!A:X`, credentials);
+    const [header = [], ...rows] = response.values ?? [];
 
-  if (!header.length || rows.length === 0) {
+    if (!header.length || rows.length === 0) {
+      return lfaProjects;
+    }
+
+    const projects = rows
+      .map((row) => rowToProject(row, header))
+      .filter((project): project is LFAProject => Boolean(project));
+
+    return projects.length ? projects : lfaProjects;
+  } catch (error) {
+    console.error('fetchLfaProjectsFromSheet fallback:', error);
     return lfaProjects;
   }
-
-  const projects = rows
-    .map((row) => rowToProject(row, header))
-    .filter((project): project is LFAProject => Boolean(project));
-
-  return projects.length ? projects : lfaProjects;
 }
 
 export async function fetchLfaProjectById(id: string): Promise<LFAProject | null> {
-  const projects = await fetchLfaProjectsFromSheet();
-  return projects.find((project) => project.id === id) ?? null;
+  try {
+    const projects = await fetchLfaProjectsFromSheet();
+    return projects.find((project) => project.id === id) ?? null;
+  } catch (error) {
+    console.error('fetchLfaProjectById fallback:', error);
+    return lfaProjects.find((project) => project.id === id) ?? null;
+  }
 }
 
 export async function syncSeedProjectsToSheet(projects: LFAProject[] = lfaProjects) {
