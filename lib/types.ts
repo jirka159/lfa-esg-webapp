@@ -27,6 +27,7 @@ export type LFAProjectCategory = {
 export type LFAProjectType = 'L' | 'M' | 'S';
 export type LFAProjectTimeline = 'S' | 'M' | 'L';
 export type LFAProjectActivityStatus = 'hotovo' | 'probiha' | 'plan';
+export type LFAZapracovaniStatus = 'Idea' | 'Připravuje se' | 'Připraveno';
 
 export type LFAProjectActivity = {
   name: string;
@@ -55,4 +56,8 @@ export type LFAProject = {
   popis: string;
   lide?: number;
   aktivity?: LFAProjectActivity[];
+  stavZapracovani: LFAZapracovaniStatus;
+  muzeDoProdukce: boolean;
 };
+
+export type LFAProjectStatusUpdate = Pick<LFAProject, 'id' | 'stavZapracovani' | 'muzeDoProdukce'>;

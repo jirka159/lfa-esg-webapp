@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState, type DragEvent } from 'react';
 import { logout } from '@/lib/auth-client';
+import { ProjectStatusBadges } from '@/components/project-status-badges';
 import { LFAProject, LFAProjectCategory, LFAProjectType } from '@/lib/types';
 
 const YEARS = [2026, 2027, 2028, 2029, 2030] as const;
@@ -237,6 +238,7 @@ export function ProjectPlanner({ projects, categories }: Props) {
                           <span className="slotProjectMeta">{project.id}</span>
                           <strong>{project.name}</strong>
                           <span className="slotProjectCategory">{categoryMap[project.cat]}</span>
+                          <ProjectStatusBadges project={project} compact />
                           <span
                             className="slotRemove"
                             onClick={(event) => {
@@ -348,6 +350,7 @@ export function ProjectPlanner({ projects, categories }: Props) {
         </span>
         <strong>{project.name}</strong>
         <small>{categoryMap[project.cat]}</small>
+        <ProjectStatusBadges project={project} compact />
       </Link>
     );
   }

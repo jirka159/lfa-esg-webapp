@@ -29,13 +29,37 @@ Cílové nasazení: **https://lfa.jirkovo.app**
 
 ## Zdroj dat
 
-Aktuálně aplikace používá lokální seed data v `data/activities.ts`.
+Aktuálně aplikace používá lokální seed data v `data/activities.ts` a `data/lfa-projects.ts`.
 
 Google Sheet pro další iteraci:
 
 - https://docs.google.com/spreadsheets/d/12OGL5VJoBwFx0Pj4cGvEz8GwA1_HmKXfwPSQ3ZamkH0/edit
 
-Placeholdery pro budoucí integraci jsou v `.env.example`.
+Nově je připravená i synchronizace stavových atributů projektů do Google Sheetu přes route `POST /api/lfa-project-status`.
+
+### Sloupce připravené pro LFA sheet
+
+Záložka `Projekty` očekává / vytváří sloupce:
+
+1. `ID projektu`
+2. `Název projektu`
+3. `Stav zapracování`
+4. `Může do produkce`
+5. `Aktualizováno`
+
+### Co chybí pro plně funkční zápis ve Vercelu
+
+Aby route mohla bezpečně zapisovat do Google Sheets API, je potřeba doplnit do Vercelu / `.env`:
+
+- `GOOGLE_SHEETS_SPREADSHEET_ID`
+- `GOOGLE_SERVICE_ACCOUNT_EMAIL`
+- `GOOGLE_PRIVATE_KEY`
+
+Bez těchto secretů aplikace:
+
+- změny uloží lokálně v prohlížeči,
+- zobrazí je v katalogu i detailu,
+- ale při syncu do Google Sheetu vrátí informativní hlášku.
 
 ## Lokální spuštění
 

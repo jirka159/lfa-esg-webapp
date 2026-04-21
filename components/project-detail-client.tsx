@@ -1,0 +1,209 @@
+"use client";
+
+import Link from 'next/link';
+import { useEffect, useMemo, useState, useTransition } from 'react';
+import { lfaProjectCategories } from '@/data/lfa-projects';
+import { LFAProject, LFAProjectStatusUpdate } from '@/lib/types';
+import {
+  LFA_ZAPRACOVANI_OPTIONS,
+  readProjectStatusOverrides,
+  statusBadgeClass,
+  syncProjectStatusToSheet,
+  writeProjectStatusOverrides
+} from '@/lib/lfa-project-status';
+import { ProjectStatusBadges } from '@/components/project-status-badges';
+
+const TYPE_LABEL = {
+  L: 'Komplex',
+  M: 'Standard',
+  S: 'Easy win'
+} as const;
+
+const TIME_LABEL = {
+  S: 'Krátkodobé (< 6 měsíců)',
+  M: 'Střednědobé (6–12 měsíců)',
+  L: 'Dlouhodobé (12+ měsíců)'
+} as const;
+
+const STATUS_LABEL = {
+  hotovo: 'hotovo',
+  probiha: 'probíhá',
+  plan: 'naplánováno'
+} as const;
+
+function scoreLabel(score: number) {
+  if (score >= 4) return 'Vysoká';
+  if (score >= 3) return 'Střední';
+  return 'Nižší';
+}
+
+export function ProjectDetailClient({ project }: { project: LFAProject }) {
+  const categoryMap = useMemo(
+    () => Object.fromEntries(lfaProjectCategories.map((item) => [item.id, item.label])),
+    []
+  );
+  const [formState, setFormState] = useState<LFAProjectStatusUpdate>({
+    id: project.id,
+    stavZapracovani: project.stavZapracovani,
+    muzeDoProdukce: project.muzeDoProdukce
+  });
+  const [saveMessage, setSaveMessage] = useState<string>('');
+  const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    const stored = readProjectStatusOverrides()[project.id];
+    if (stored) setFormState(stored);
+  }, [project.id]);
+
+  function handleSave() {
+    setSaveMessage('');
+    startTransition(async () => {
+      const updates = readProjectStatusOverrides();
+      updates[project.id] = formState;
+      writeProjectStatusOverrides(updates);
+
+      try {
+        await syncProjectStatusToSheet(formState);
+        setSaveMessage('Změny byly uložené lokálně i odeslané do Google Sheetu.');
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Nepodařilo se uložit změny.';
+        setSaveMessage(`Změny jsou uložené lokálně. Google Sheet: ${message}`);
+      }
+    });
+  }
+
+  const effectiveProject = { ...project, ...formState };
+
+  return (
+    <main className="dashboardPage projectDetailPage">
+      <div className="projectDetailShell panelShell">
+        <div className="projectDetailTopbar">
+          <Link href="/planner" className="secondaryButton projectBackLink">
+            ← Zpět do katalogu
+          </Link>
+          <div className={`detailBadge type${project.type}`}>{TYPE_LABEL[project.type]}</div>
+        </div>
+
+        <header className="projectDetailHeader">
+          <span className="eyebrow">Detail projektu</span>
+          <h1>{project.name}</h1>
+          <div className="detailMetaRow">
+            <span>{project.id}</span>
+            <span>{categoryMap[project.cat]}</span>
+            <span>{TIME_LABEL[project.cas]}</span>
+          </div>
+          <ProjectStatusBadges project={effectiveProject} />
+        </header>
+
+        <section className="projectDetailGrid">
+          <div className="detailIntro">
+            <p>{project.popis}</p>
+          </div>
+
+          <div className="detailMetrics">
+            <div className="metricTile">
+              <span>Dopad</span>
+              <strong>{project.dopad.toFixed(2)}</strong>
+            </div>
+            <div className="metricTile">
+              <span>Náročnost</span>
+              <strong>{scoreLabel(project.narocnost)}</strong>
+            </div>
+            <div className="metricTile">
+              <span>Lidé</span>
+              <strong>{project.lide ?? '—'}</strong>
+            </div>
+          </div>
+
+          <div className="detailBlock statusEditorBlock detailBlockWide">
+            <span className="detailLabel">Řízení stavu projektu</span>
+            <div className="statusEditorGrid">
+              <label className="field">
+                <span>Stav zapracování</span>
+                <select
+                  value={formState.stavZapracovani}
+                  onChange={(event) =>
+                    setFormState((current) => ({
+                      ...current,
+                      stavZapracovani: event.target.value as LFAProject['stavZapracovani']
+                    }))
+                  }
+                >
+                  {LFA_ZAPRACOVANI_OPTIONS.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="checkboxField">
+                <input
+                  type="checkbox"
+                  checked={formState.muzeDoProdukce}
+                  onChange={(event) =>
+                    setFormState((current) => ({
+                      ...current,
+                      muzeDoProdukce: event.target.checked
+                    }))
+                  }
+                />
+                <span>Může jít do produkce</span>
+              </label>
+            </div>
+
+            <div className="statusPreviewRow">
+              <span className={`statusBadge ${statusBadgeClass(formState.stavZapracovani)}`}>
+                {formState.stavZapracovani}
+              </span>
+              <span className={`statusBadge ${formState.muzeDoProdukce ? 'prodYes' : 'prodNo'}`}>
+                {formState.muzeDoProdukce ? 'Povoleno pro produkci' : 'Zatím ne do produkce'}
+              </span>
+            </div>
+
+            <div className="statusEditorActions">
+              <button className="primaryButton" type="button" onClick={handleSave} disabled={isPending}>
+                {isPending ? 'Ukládám…' : 'Uložit změny'}
+              </button>
+              {saveMessage ? <p className="syncMessage">{saveMessage}</p> : null}
+            </div>
+          </div>
+
+          <div className="detailBlock">
+            <span className="detailLabel">Owner / realizace</span>
+            <p>{project.owner || 'Bude doplněno'}</p>
+          </div>
+
+          <div className="detailBlock">
+            <span className="detailLabel">Navrhované KPI</span>
+            <p>{project.kpi || 'Bude doplněno v dalším kroku.'}</p>
+          </div>
+
+          <div className="detailBlock">
+            <span className="detailLabel">Zdroj inspirace</span>
+            <p>{project.zdroj || 'Katalog LFA'}</p>
+          </div>
+
+          <div className="detailBlock detailBlockWide">
+            <span className="detailLabel">Rozpad aktivit</span>
+            {project.aktivity?.length ? (
+              <div className="activityChecklist">
+                {project.aktivity.map((activity) => (
+                  <div className="activityChecklistItem" key={activity.name}>
+                    <span className={`checkDot ${activity.status}`}></span>
+                    <div>
+                      <strong>{activity.name}</strong>
+                      <small>{STATUS_LABEL[activity.status]}</small>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p>Zde v kroku 2 doplníme plný detail projektu a rozpad implementace.</p>
+            )}
+          </div>
+        </section>
+      </div>
+    </main>
+  );
+}

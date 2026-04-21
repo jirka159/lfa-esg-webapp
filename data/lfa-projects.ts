@@ -1,4 +1,10 @@
-import { LFAProject, LFAProjectCategory } from '@/lib/types';
+import { LFAProject, LFAProjectCategory, LFAZapracovaniStatus } from '@/lib/types';
+
+const DEFAULT_STATUS_BY_TYPE: Record<LFAProject['type'], LFAZapracovaniStatus> = {
+  L: 'Připravuje se',
+  M: 'Připravuje se',
+  S: 'Idea'
+};
 
 export const lfaProjectCategories: LFAProjectCategory[] = [
   {
@@ -47,7 +53,7 @@ export const lfaProjectCategories: LFAProjectCategory[] = [
   }
 ];
 
-export const lfaProjects: LFAProject[] = [
+const lfaProjectsSeed = [
   {
     "id": "1.1",
     "name": "Stadion bez předsudků (easy)",
@@ -1512,4 +1518,10 @@ export const lfaProjects: LFAProject[] = [
     "uefa": "Governance",
     "popis": "Nezávislý audit nastavených governance procesů třetí stranou."
   }
-];
+] as Omit<LFAProject, 'stavZapracovani' | 'muzeDoProdukce'>[];
+
+export const lfaProjects: LFAProject[] = lfaProjectsSeed.map((project) => ({
+  ...project,
+  stavZapracovani: DEFAULT_STATUS_BY_TYPE[project.type],
+  muzeDoProdukce: false
+}));

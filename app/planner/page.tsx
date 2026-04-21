@@ -1,5 +1,5 @@
 import { AuthGuard } from '@/components/auth-guard';
-import { ProjectPlanner } from '@/components/project-planner';
+import { ProjectPlannerClient } from '@/components/project-planner-client';
 import { lfaProjectCategories, lfaProjects } from '@/data/lfa-projects';
 
 export default function PlannerPage() {
@@ -46,7 +46,7 @@ export default function PlannerPage() {
           </div>
         </header>
 
-        <ProjectPlanner projects={lfaProjects} categories={lfaProjectCategories} />
+        <ProjectPlannerClient projects={lfaProjects} categories={lfaProjectCategories} />
       </main>
     </AuthGuard>
   );
