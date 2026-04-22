@@ -6,7 +6,7 @@ import { lfaProjectCategories } from '@/data/lfa-projects';
 import { LFAProject, LFAProjectStatusUpdate } from '@/lib/types';
 import { LFA_ZAPRACOVANI_OPTIONS, syncProjectStatusToSheet } from '@/lib/lfa-project-status';
 import { ProjectStatusBadges } from '@/components/project-status-badges';
-import { type AuthSessionContext } from '@/lib/auth';
+import { type SessionContext } from '@/lib/auth-client';
 import { TeamSwitcher } from '@/components/team-switcher';
 
 const TYPE_LABEL = {
@@ -33,7 +33,7 @@ function scoreLabel(score: number) {
   return 'Nižší';
 }
 
-export function ProjectDetailClient({ project, session }: { project: LFAProject; session: AuthSessionContext }) {
+export function ProjectDetailClient({ project, session }: { project: LFAProject; session: SessionContext }) {
   const categoryMap = useMemo(
     () => Object.fromEntries(lfaProjectCategories.map((item) => [item.id, item.label])),
     []
