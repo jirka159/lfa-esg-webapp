@@ -2,12 +2,22 @@
 
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { switchActiveTeam, type AuthenticatedUser } from '@/lib/auth-client';
+import { switchActiveTeam } from '@/lib/auth-client';
+
+type TeamUser = {
+  id: string;
+  username: string;
+  displayName: string;
+  teamName: string;
+  clubId: string;
+  planId: string;
+  isAdmin?: boolean;
+};
 
 type Props = {
-  currentUser: AuthenticatedUser;
-  activeTeam: AuthenticatedUser;
-  availableTeams: AuthenticatedUser[];
+  currentUser: TeamUser;
+  activeTeam: TeamUser;
+  availableTeams: TeamUser[];
 };
 
 export function TeamSwitcher({ currentUser, activeTeam, availableTeams }: Props) {
