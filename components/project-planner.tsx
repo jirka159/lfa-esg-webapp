@@ -7,7 +7,8 @@ import { ProjectStatusBadges } from '@/components/project-status-badges';
 import { createEmptyRoadmapPlan, LFA_ROADMAP_MINIMUM_SECTIONS, LFA_ROADMAP_YEARS, normalizeRoadmapState } from '@/lib/lfa-roadmap';
 import { syncRoadmapToSheet } from '@/lib/lfa-roadmap-client';
 import { LFARoadmapState, LFARoadmapYear, LFAProject, LFAProjectCategory, LFAProjectType } from '@/lib/types';
-import { type LFAUser } from '@/lib/lfa-users';
+import { type SessionContext } from '@/lib/auth-client';
+import { TeamSwitcher } from '@/components/team-switcher';
 
 const TYPE_LABEL: Record<LFAProjectType, string> = {
   L: 'Komplex',
@@ -27,10 +28,10 @@ type Props = {
   projects: LFAProject[];
   categories: LFAProjectCategory[];
   initialPlan: LFARoadmapState;
-  currentUser: LFAUser;
+  session: SessionContext;
 };
 
-export function ProjectPlanner({ projects, categories, initialPlan, currentUser }: Props) {
+export function ProjectPlanner({ projects, categories, initialPlan, session }: Props) {
   const [plan, setPlan] = useState<LFARoadmapState>(() => normalizeRoadmapState(initialPlan, projects));
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [query, setQuery] = useState('');
@@ -125,9 +126,9 @@ export function ProjectPlanner({ projects, categories, initialPlan, currentUser 
       try {
         const savedPlan = await syncRoadmapToSheet({
           plan: normalizedPlan,
-          planId: currentUser.planId,
-          clubId: currentUser.clubId,
-          updatedBy: `${currentUser.username} • ${currentUser.teamName}`
+          planId: session.activeTeam.planId,
+          clubId: session.activeTeam.clubId,
+          updatedBy: `${session.user.displayName} • ${session.activeTeam.teamName}`
         });
         setPlan(normalizeRoadmapState(savedPlan, projects));
         setSaveMessage(successMessage);
@@ -238,9 +239,11 @@ export function ProjectPlanner({ projects, categories, initialPlan, currentUser 
     <>
       <div className="boardActions boardActionsTop">
         <div className="teamContextCard">
-          <span className="eyebrow">Přihlášený tým</span>
-          <strong>{currentUser.teamName}</strong>
-          <small>Uživatel {currentUser.username} · oddělený plán {currentUser.planId}</small>
+          <span className="eyebrow">Pracovní kontext</span>
+          <strong>{session.user.displayName}</strong>
+          <small>
+            Aktivní tým {session.activeTeam.teamName} · plán {session.activeTeam.planId}
+          </small>
         </div>
         <button className="secondaryButton" type="button" onClick={resetBoard} disabled={isPending}>
           Resetovat roadmapu
@@ -250,11 +253,17 @@ export function ProjectPlanner({ projects, categories, initialPlan, currentUser 
         </button>
       </div>
 
+      <TeamSwitcher
+        currentUser={session.user}
+        activeTeam={session.activeTeam}
+        availableTeams={session.availableTeams}
+      />
+
       <section className="timelineSection panelShell">
         <div className="sectionHeading sectionHeadingRoadmap">
           <div>
             <span className="eyebrow">Roadmapa 2026–2030</span>
-            <h2>Strategický board priorit pro {currentUser.teamName}</h2>
+            <h2>Strategický board priorit pro {session.activeTeam.teamName}</h2>
             <p className="sectionLead">
               Projekty stačí přetáhnout na sloupec roku. Každý tým pracuje se svým vlastním odděleným plánem,
               katalog projektů zůstává společný.
@@ -418,9 +427,7 @@ export function ProjectPlanner({ projects, categories, initialPlan, currentUser 
                     <span>{TYPE_LABEL[type]}</span>
                     <strong>{groupedByType[type].length}</strong>
                   </div>
-                  <div className="typeColumnBody">
-                    {groupedByType[type].map((project) => renderProjectChip(project))}
-                  </div>
+                  <div className="typeColumnBody">{groupedByType[type].map((project) => renderProjectChip(project))}</div>
                 </section>
               ))}
             </div>

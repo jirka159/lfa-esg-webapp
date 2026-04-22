@@ -2,13 +2,12 @@
 
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { switchActiveTeam } from '@/lib/auth-client';
-import { type LFAUser } from '@/lib/lfa-users';
+import { switchActiveTeam, type AuthenticatedUser } from '@/lib/auth-client';
 
 type Props = {
-  currentUser: LFAUser;
-  activeTeam: LFAUser;
-  availableTeams: LFAUser[];
+  currentUser: AuthenticatedUser;
+  activeTeam: AuthenticatedUser;
+  availableTeams: AuthenticatedUser[];
 };
 
 export function TeamSwitcher({ currentUser, activeTeam, availableTeams }: Props) {
