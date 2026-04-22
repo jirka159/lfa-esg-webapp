@@ -365,7 +365,6 @@ export function ProjectPlanner({ projects, categories, initialPlan, session }: P
                                 </span>
                                 <strong>{project.name}</strong>
                                 <span className="slotProjectCategory">{categoryMap[project.cat]}</span>
-                                <ProjectStatusBadges project={project} compact />
                                 <span
                                   className="slotRemove"
                                   onClick={(event) => {
