@@ -41,5 +41,13 @@ type Props = {
 };
 
 export function ProjectPlannerClient({ projects, categories, initialPlan, session }: Props) {
-  return <ProjectPlanner projects={projects} categories={categories} initialPlan={initialPlan} session={session} />;
+  return (
+    <ProjectPlanner
+      key={`${session.activeTeam.id}:${session.activeTeam.planId}:${session.activeTeam.clubId}`}
+      projects={projects}
+      categories={categories}
+      initialPlan={initialPlan}
+      session={session}
+    />
+  );
 }

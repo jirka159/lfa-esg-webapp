@@ -1,7 +1,7 @@
 "use client";
 
 import Link from 'next/link';
-import { useMemo, useState, useTransition } from 'react';
+import { useEffect, useMemo, useState, useTransition } from 'react';
 import { lfaProjectCategories } from '@/data/lfa-projects';
 import { LFAProject, LFAProjectStatusUpdate } from '@/lib/types';
 import { LFA_ZAPRACOVANI_OPTIONS, syncProjectStatusToSheet } from '@/lib/lfa-project-status';
@@ -60,6 +60,15 @@ export function ProjectDetailClient({ project, session }: { project: LFAProject;
   });
   const [saveMessage, setSaveMessage] = useState<string>('');
   const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    setFormState({
+      id: project.id,
+      stavZapracovani: project.stavZapracovani,
+      muzeDoProdukce: project.muzeDoProdukce
+    });
+    setSaveMessage('');
+  }, [project.id, project.stavZapracovani, project.muzeDoProdukce, session.activeTeam.id]);
 
   function handleSave() {
     setSaveMessage('');

@@ -47,7 +47,8 @@ type Props = {
 };
 
 export function ProjectPlanner({ projects, categories, initialPlan, session }: Props) {
-  const [plan, setPlan] = useState<LFARoadmapState>(() => normalizeRoadmapState(initialPlan, projects));
+  const normalizedInitialPlan = useMemo(() => normalizeRoadmapState(initialPlan, projects), [initialPlan, projects]);
+  const [plan, setPlan] = useState<LFARoadmapState>(normalizedInitialPlan);
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [query, setQuery] = useState('');
   const [dragProjectId, setDragProjectId] = useState<string | null>(null);
@@ -107,6 +108,24 @@ export function ProjectPlanner({ projects, categories, initialPlan, session }: P
       })
     ) as Record<LFARoadmapYear, Record<LFAProjectType, LFAProject[]>>;
   }, [plan, projectMap]);
+
+  useEffect(() => {
+    setPlan(normalizedInitialPlan);
+    setSaveMessage('');
+    setDragProjectId(null);
+    setActiveDropYear(null);
+    dragOriginRef.current = null;
+    dragReturnScrollRef.current = null;
+  }, [normalizedInitialPlan, session.activeTeam.id]);
+
+  useEffect(() => {
+    setSelectedId((current) => {
+      if (current && projectMap[current]) {
+        return current;
+      }
+      return projects[0]?.id ?? '';
+    });
+  }, [projectMap, projects]);
 
   useEffect(() => {
     if (restoredScrollRef.current) return;

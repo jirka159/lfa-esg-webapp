@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { switchActiveTeam } from '@/lib/auth-client';
 
@@ -25,6 +25,11 @@ export function TeamSwitcher({ currentUser, activeTeam, availableTeams }: Props)
   const [selectedTeamId, setSelectedTeamId] = useState<string>(activeTeam.id);
   const [error, setError] = useState('');
   const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    setSelectedTeamId(activeTeam.id);
+    setError('');
+  }, [activeTeam.id]);
 
   if (!currentUser.isAdmin || availableTeams.length <= 1) {
     return null;

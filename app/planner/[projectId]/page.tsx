@@ -10,5 +10,11 @@ export default async function ProjectDetailPage({ params }: { params: { projectI
   const project = await fetchLfaProjectById(decodeURIComponent(params.projectId));
   if (!project) notFound();
 
-  return <ProjectDetailClient project={project} session={session} />;
+  return (
+    <ProjectDetailClient
+      key={`${session.activeTeam.id}:${project.id}:${project.stavZapracovani}:${project.muzeDoProdukce ? '1' : '0'}`}
+      project={project}
+      session={session}
+    />
+  );
 }
