@@ -398,7 +398,7 @@ export function ProjectPlanner({ projects, categories, initialPlan, session }: P
                         {!hasProjects ? (
                           <div className="slotTopline timelineGroupHeading">
                             <span>{TYPE_LABEL[type]}</span>
-                            <small>{type}</small>
+                            <small>{type === 'L' ? 'K' : type === 'M' ? 'S' : 'E'}</small>
                           </div>
                         ) : null}
 
@@ -421,7 +421,9 @@ export function ProjectPlanner({ projects, categories, initialPlan, session }: P
                               >
                                 <span className="slotProjectMeta">
                                   <span />
-                                  <span />
+                                  <span className={`slotTypeBadge ${TYPE_CLASS[project.type]}`}>
+                                    {project.type === 'L' ? 'K' : project.type === 'M' ? 'S' : 'E'}
+                                  </span>
                                 </span>
                                 <strong>{project.name}</strong>
                                 <span className="slotProjectCategory">{categoryMap[project.cat]}</span>
