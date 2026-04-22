@@ -7,13 +7,22 @@ import { ProjectStatusBadges } from '@/components/project-status-badges';
 import { createEmptyRoadmapPlan, LFA_ROADMAP_MINIMUM_SECTIONS, LFA_ROADMAP_YEARS, normalizeRoadmapState } from '@/lib/lfa-roadmap';
 import { syncRoadmapToSheet } from '@/lib/lfa-roadmap-client';
 import { LFARoadmapState, LFARoadmapYear, LFAProject, LFAProjectCategory, LFAProjectType } from '@/lib/types';
-import { type AuthenticatedUser } from '@/lib/auth-client';
 import { TeamSwitcher } from '@/components/team-switcher';
 
+type ClientSessionUser = {
+  id: string;
+  username: string;
+  displayName: string;
+  teamName: string;
+  clubId: string;
+  planId: string;
+  isAdmin?: boolean;
+};
+
 type PlannerSession = {
-  user: AuthenticatedUser;
-  activeTeam: AuthenticatedUser;
-  availableTeams: AuthenticatedUser[];
+  user: ClientSessionUser;
+  activeTeam: ClientSessionUser;
+  availableTeams: ClientSessionUser[];
 };
 
 const TYPE_LABEL: Record<LFAProjectType, string> = {

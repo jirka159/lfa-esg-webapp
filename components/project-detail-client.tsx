@@ -6,13 +6,22 @@ import { lfaProjectCategories } from '@/data/lfa-projects';
 import { LFAProject, LFAProjectStatusUpdate } from '@/lib/types';
 import { LFA_ZAPRACOVANI_OPTIONS, syncProjectStatusToSheet } from '@/lib/lfa-project-status';
 import { ProjectStatusBadges } from '@/components/project-status-badges';
-import { type AuthenticatedUser } from '@/lib/auth-client';
 import { TeamSwitcher } from '@/components/team-switcher';
 
+type ClientSessionUser = {
+  id: string;
+  username: string;
+  displayName: string;
+  teamName: string;
+  clubId: string;
+  planId: string;
+  isAdmin?: boolean;
+};
+
 type DetailSession = {
-  user: AuthenticatedUser;
-  activeTeam: AuthenticatedUser;
-  availableTeams: AuthenticatedUser[];
+  user: ClientSessionUser;
+  activeTeam: ClientSessionUser;
+  availableTeams: ClientSessionUser[];
 };
 
 const TYPE_LABEL = {
