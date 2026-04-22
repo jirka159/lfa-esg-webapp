@@ -97,24 +97,33 @@ button, input, select { font: inherit; }
 .typeL, .detailBadge.typeL { background: var(--type-l-bg); color: var(--type-l-ink); border-color: var(--type-l-line); }
 .typeM, .detailBadge.typeM { background: var(--type-m-bg); color: var(--type-m-ink); border-color: var(--type-m-line); }
 .typeS, .detailBadge.typeS { background: var(--type-s-bg); color: var(--type-s-ink); border-color: var(--type-s-line); }
-.timelineGrid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px; align-items: start; }
+.slotProjectCard.typeL { background: linear-gradient(180deg, rgba(253,241,234,.98), rgba(255,255,255,.98)); border-color: rgba(239,193,170,.82); }
+.slotProjectCard.typeM { background: linear-gradient(180deg, rgba(237,244,253,.98), rgba(255,255,255,.98)); border-color: rgba(178,208,239,.9); }
+.slotProjectCard.typeS { background: linear-gradient(180deg, rgba(237,247,232,.98), rgba(255,255,255,.98)); border-color: rgba(185,220,160,.92); }
+.timelineGrid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; align-items: start; }
 .yearColumn, .catalogPanel, .catalogSidebar, .typeColumnBody, .projectDetailShell { display: grid; gap: 14px; }
-.yearColumn { border-radius: 26px; padding: 12px; background: rgba(255,255,255,.56); border: 1px solid transparent; transition: border-color 120ms ease, box-shadow 120ms ease, background 120ms ease; }
-.yearColumn.isActive { background: rgba(255,255,255,.9); border-color: rgba(54,169,90,.22); box-shadow: inset 0 0 0 2px rgba(54,169,90,.14); }
-.yearHeading { padding: 10px 8px; }
-.yearSections { display: grid; gap: 10px; }
-.timelineGroup { min-height: 120px; border-radius: 22px; border: 1px dashed var(--line-strong); padding: 12px; background: rgba(255,255,255,.65); display: grid; gap: 10px; align-content: start; }
+.yearColumn { border-radius: 28px; padding: 10px; background: rgba(255,255,255,.42); border: 1px solid rgba(255,255,255,.6); transition: border-color 120ms ease, box-shadow 120ms ease, background 120ms ease; }
+.yearColumn.isActive { background: rgba(255,255,255,.9); border-color: rgba(54,169,90,.22); box-shadow: inset 0 0 0 2px rgba(54,169,90,.1), 0 14px 32px rgba(54,169,90,.08); }
+.yearHeading { padding: 8px 8px 2px; }
+.yearSections { display: grid; gap: 8px; }
+.timelineGroup { min-height: 96px; border-radius: 20px; padding: 10px; display: grid; gap: 8px; align-content: start; transition: background 120ms ease, border-color 120ms ease, box-shadow 120ms ease; }
+.timelineGroup.isEmpty { border: 1px solid rgba(35,52,77,.08); background: rgba(255,255,255,.9); }
+.timelineGroup.isFilled { border: 1px solid transparent; background: rgba(255,255,255,.48); }
 .timelineGroupHeading { align-items: center; }
-.timelineGroupBody { display: grid; gap: 10px; align-content: start; min-height: 48px; grid-auto-rows: max-content; }
+.timelineGroupBody { display: grid; gap: 8px; align-content: start; min-height: 40px; grid-auto-rows: max-content; }
 .slotTopline { display: flex; justify-content: space-between; gap: 8px; color: var(--ink-soft); }
-.slotProjectCard, .catalogChip { display: grid; gap: 8px; width: 100%; text-align: left; border-radius: 18px; border: 1px solid var(--line); padding: 14px; background: #fff; position: relative; align-content: start; min-height: 132px; }
-.slotProjectMeta, .catalogChipTop { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+.slotProjectCard, .catalogChip { display: grid; gap: 8px; width: 100%; text-align: left; border-radius: 18px; border: 1px solid var(--line); padding: 12px; background: #fff; position: relative; align-content: start; min-height: 104px; }
+.slotProjectCard { box-shadow: 0 10px 24px rgba(18,35,58,.06); }
+.slotProjectMeta, .catalogChipTop, .slotProjectFooter { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
 .slotProjectCategory, .catalogChip small { color: var(--ink-soft); }
-.slotProjectCard.isSelected, .catalogChip.isSelected { box-shadow: inset 0 0 0 2px rgba(29,34,65,.12); }
-.slotProjectDetailLink { font-size: .78rem; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .08em; }
+.slotProjectCard.isSelected, .catalogChip.isSelected { box-shadow: inset 0 0 0 2px rgba(29,34,65,.12), 0 12px 28px rgba(18,35,58,.08); }
+.slotProjectDetailLink { font-size: .72rem; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .08em; }
 .slotProjectDetailLink:hover { color: var(--ink); }
-.slotRemove { position: absolute; right: 12px; top: 12px; font-size: 1.1rem; cursor: pointer; }
-.slotPlaceholder { color: var(--ink-soft); font-size: .92rem; padding: 10px 0; }
+.slotTypeBadge { display: inline-flex; align-items: center; border-radius: 999px; padding: 5px 9px; font-size: .64rem; text-transform: uppercase; letter-spacing: .08em; border: 1px solid transparent; }
+.slotRemove { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 999px; font-size: 1rem; cursor: pointer; background: rgba(255,255,255,.72); border: 1px solid rgba(35,52,77,.08); }
+.slotPlaceholder { color: var(--ink-soft); font-size: .88rem; padding: 10px 2px; min-height: 54px; display: flex; align-items: center; }
+.slotProjectCard strong { font-size: .96rem; line-height: 1.35; }
+.slotProjectCard .slotProjectCategory { font-size: .84rem; line-height: 1.35; }
 .plannerLayout { margin-top: 20px; }
 .catalogWorkspace { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 16px; }
 .catalogSidebar { align-content: start; }

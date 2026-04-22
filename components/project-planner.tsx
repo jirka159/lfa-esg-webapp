@@ -386,15 +386,22 @@ export function ProjectPlanner({ projects, categories, initialPlan, session }: P
                 <div className={`yearSections ${isActive ? 'isActive' : ''}`}>
                   {LFA_ROADMAP_MINIMUM_SECTIONS.map((type) => {
                     const yearProjectsOfType = grouped[type];
+                    const hasProjects = yearProjectsOfType.length > 0;
+
                     return (
-                      <section className={`timelineGroup ${TYPE_CLASS[type]}`} key={`${year}-${type}`}>
-                        <div className="slotTopline timelineGroupHeading">
-                          <span>{TYPE_LABEL[type]}</span>
-                          <small>{yearProjectsOfType.length || '0'}×</small>
-                        </div>
+                      <section
+                        className={`timelineGroup ${hasProjects ? 'isFilled' : 'isEmpty'} ${hasProjects ? TYPE_CLASS[type] : ''}`}
+                        key={`${year}-${type}`}
+                      >
+                        {!hasProjects ? (
+                          <div className="slotTopline timelineGroupHeading">
+                            <span>{TYPE_LABEL[type]}</span>
+                            <small>{type}</small>
+                          </div>
+                        ) : null}
 
                         <div className="timelineGroupBody">
-                          {yearProjectsOfType.length ? (
+                          {hasProjects ? (
                             yearProjectsOfType.map((project) => (
                               <button
                                 key={project.id}
@@ -408,6 +415,11 @@ export function ProjectPlanner({ projects, categories, initialPlan, session }: P
                               >
                                 <span className="slotProjectMeta">
                                   <span>{project.id}</span>
+                                  <span className={`slotTypeBadge ${TYPE_CLASS[project.type]}`}>{TYPE_LABEL[project.type]}</span>
+                                </span>
+                                <strong>{project.name}</strong>
+                                <span className="slotProjectCategory">{categoryMap[project.cat]}</span>
+                                <div className="slotProjectFooter">
                                   <Link
                                     href={`/planner/${encodeURIComponent(project.id)}`}
                                     className="slotProjectDetailLink"
@@ -419,22 +431,20 @@ export function ProjectPlanner({ projects, categories, initialPlan, session }: P
                                   >
                                     Detail →
                                   </Link>
-                                </span>
-                                <strong>{project.name}</strong>
-                                <span className="slotProjectCategory">{categoryMap[project.cat]}</span>
-                                <span
-                                  className="slotRemove"
-                                  onClick={(event) => {
-                                    event.stopPropagation();
-                                    clearProject(project.id);
-                                  }}
-                                >
-                                  ×
-                                </span>
+                                  <span
+                                    className="slotRemove"
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      clearProject(project.id);
+                                    }}
+                                  >
+                                    ×
+                                  </span>
+                                </div>
                               </button>
                             ))
                           ) : (
-                            <div className="slotPlaceholder">Přetáhni projekt kamkoliv do sloupce roku</div>
+                            <div className="slotPlaceholder">Prázdný slot pro tuto vrstvu</div>
                           )}
                         </div>
                       </section>
