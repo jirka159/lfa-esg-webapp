@@ -6,7 +6,8 @@ import { lfaProjectCategories } from '@/data/lfa-projects';
 import { LFAProject, LFAProjectStatusUpdate } from '@/lib/types';
 import { LFA_ZAPRACOVANI_OPTIONS, syncProjectStatusToSheet } from '@/lib/lfa-project-status';
 import { ProjectStatusBadges } from '@/components/project-status-badges';
-import { type LFAUser } from '@/lib/lfa-users';
+import { type AuthSessionContext } from '@/lib/auth';
+import { TeamSwitcher } from '@/components/team-switcher';
 
 const TYPE_LABEL = {
   L: 'Komplex',
@@ -32,7 +33,7 @@ function scoreLabel(score: number) {
   return 'Nižší';
 }
 
-export function ProjectDetailClient({ project, currentUser }: { project: LFAProject; currentUser: LFAUser }) {
+export function ProjectDetailClient({ project, session }: { project: LFAProject; session: AuthSessionContext }) {
   const categoryMap = useMemo(
     () => Object.fromEntries(lfaProjectCategories.map((item) => [item.id, item.label])),
     []
@@ -69,13 +70,21 @@ export function ProjectDetailClient({ project, currentUser }: { project: LFAProj
           </Link>
           <div className="detailTopbarMeta">
             <div className="teamContextCard isCompact">
-              <span className="eyebrow">Přihlášený tým</span>
-              <strong>{currentUser.teamName}</strong>
-              <small>Uživatel {currentUser.username}</small>
+              <span className="eyebrow">Přihlášený uživatel</span>
+              <strong>{session.user.displayName}</strong>
+              <small>
+                Aktivní tým {session.activeTeam.teamName} · účet {session.user.username}
+              </small>
             </div>
             <div className={`detailBadge type${project.type}`}>{TYPE_LABEL[project.type]}</div>
           </div>
         </div>
+
+        <TeamSwitcher
+          currentUser={session.user}
+          activeTeam={session.activeTeam}
+          availableTeams={session.availableTeams}
+        />
 
         <header className="projectDetailHeader">
           <span className="eyebrow">Detail projektu</span>
@@ -84,6 +93,7 @@ export function ProjectDetailClient({ project, currentUser }: { project: LFAProj
             <span>{project.id}</span>
             <span>{categoryMap[project.cat]}</span>
             <span>{TIME_LABEL[project.cas]}</span>
+            <span>Tým {session.activeTeam.teamName}</span>
           </div>
           <ProjectStatusBadges project={effectiveProject} />
         </header>

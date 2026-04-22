@@ -1,12 +1,18 @@
 import { NextResponse } from 'next/server';
 import { hasLfaSheetCredentials, upsertLfaProjectStatus } from '@/lib/google-sheets-lfa';
 import { LFAProjectStatusUpdate } from '@/lib/types';
+import { getAuthenticatedUser } from '@/lib/auth';
 
 export async function POST(request: Request) {
   const payload = (await request.json()) as LFAProjectStatusUpdate;
 
   if (!payload?.id || !payload?.stavZapracovani || typeof payload.muzeDoProdukce !== 'boolean') {
     return NextResponse.json({ error: 'Neplatná data požadavku.' }, { status: 400 });
+  }
+
+  const user = await getAuthenticatedUser();
+  if (!user) {
+    return NextResponse.json({ error: 'Nejste přihlášeni.' }, { status: 401 });
   }
 
   if (!hasLfaSheetCredentials()) {

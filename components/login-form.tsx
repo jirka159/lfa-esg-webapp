@@ -7,7 +7,7 @@ import { LFA_USERS } from '@/lib/lfa-users';
 
 export function LoginForm() {
   const router = useRouter();
-  const [username, setUsername] = useState('JZL');
+  const [username, setUsername] = useState('JSE');
   const [password, setPassword] = useState('heslo');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -39,7 +39,7 @@ export function LoginForm() {
       <div>
         <span className="eyebrow">LFA ESG plánovač</span>
         <h1>Přihlášení</h1>
-        <p className="muted">Přihlaste se do svého týmového planneru. Každý účet má vlastní oddělenou roadmapu.</p>
+        <p className="muted">Přihlaste se do svého týmového planneru. Admin účet může z UI přepínat aktivní tým.</p>
       </div>
 
       <label className="field">
@@ -67,7 +67,8 @@ export function LoginForm() {
         <ul className="loginAccountsList">
           {LFA_USERS.map((user) => (
             <li key={user.id}>
-              <code>{user.username}</code> — {user.teamName}
+              <code>{user.username}</code> — {user.displayName} · {user.teamName}
+              {user.isAdmin ? ' · admin' : ''}
             </li>
           ))}
         </ul>

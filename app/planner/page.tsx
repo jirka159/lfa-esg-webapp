@@ -1,15 +1,15 @@
 import { ProjectPlannerClient } from '@/components/project-planner-client';
 import { lfaProjectCategories } from '@/data/lfa-projects';
 import { fetchLfaProjectsFromSheet, fetchLfaRoadmapFromSheet } from '@/lib/google-sheets-lfa';
-import { requireAuthenticatedUser } from '@/lib/auth';
+import { requireAuthSessionContext } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
 export default async function PlannerPage() {
-  const currentUser = await requireAuthenticatedUser();
+  const session = await requireAuthSessionContext();
   const projects = await fetchLfaProjectsFromSheet();
   const initialPlan = await fetchLfaRoadmapFromSheet(
-    { planId: currentUser.planId, clubId: currentUser.clubId },
+    { planId: session.activeTeam.planId, clubId: session.activeTeam.clubId },
     projects
   );
 
@@ -26,7 +26,8 @@ export default async function PlannerPage() {
             </p>
 
             <div className="heroRibbon">
-              <span>Tým {currentUser.teamName}</span>
+              <span>Uživatel {session.user.displayName}</span>
+              <span>Aktivní tým {session.activeTeam.teamName}</span>
               <span>Roadmapa 2026–2030</span>
               <span>Oddělený plán v Google Sheetu</span>
             </div>
@@ -39,8 +40,16 @@ export default async function PlannerPage() {
             </div>
             <div className="scoreboardGrid scoreboardGridStacked">
               <div className="metricCard metricCardFeatured">
-                <span>Přihlášený tým</span>
-                <strong>{currentUser.teamName}</strong>
+                <span>Přihlášený uživatel</span>
+                <strong>{session.user.displayName}</strong>
+              </div>
+              <div className="metricCard">
+                <span>Aktivní tým</span>
+                <strong>{session.activeTeam.teamName}</strong>
+              </div>
+              <div className="metricCard">
+                <span>Režim</span>
+                <strong>{session.user.isAdmin ? 'Administrátor' : 'Týmový účet'}</strong>
               </div>
               <div className="metricCard">
                 <span>Kategorie</span>
@@ -49,7 +58,7 @@ export default async function PlannerPage() {
             </div>
             <div className="scoreboardNote">
               <span className="scorePulse" aria-hidden="true" />
-              Uživatel {currentUser.username} pracuje s vlastním plánem
+              Načtená roadmapa odpovídá právě aktivnímu týmu
             </div>
           </aside>
         </div>
@@ -59,7 +68,7 @@ export default async function PlannerPage() {
         projects={projects}
         categories={lfaProjectCategories}
         initialPlan={initialPlan}
-        currentUser={currentUser}
+        session={session}
       />
     </main>
   );
