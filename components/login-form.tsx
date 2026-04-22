@@ -1,8 +1,8 @@
 "use client";
 
-import { FormEvent, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { isBrowserAuthenticated, loginWithCredentials } from '@/lib/auth-client';
+import { fetchCurrentSession, getStoredAuthMarker, loginWithCredentials, logout } from '@/lib/auth-client';
 import { LFA_USERS } from '@/lib/lfa-users';
 
 export function LoginForm() {
@@ -11,6 +11,34 @@ export function LoginForm() {
   const [password, setPassword] = useState('heslo');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+
+    async function verifySession() {
+      try {
+        const session = await fetchCurrentSession();
+        if (!active) return;
+
+        if (session.authenticated) {
+          router.replace('/planner');
+          return;
+        }
+
+        if (getStoredAuthMarker()) {
+          await logout();
+        }
+      } finally {
+        if (active) setCheckingSession(false);
+      }
+    }
+
+    void verifySession();
+    return () => {
+      active = false;
+    };
+  }, [router]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -29,8 +57,7 @@ export function LoginForm() {
     router.refresh();
   }
 
-  if (isBrowserAuthenticated()) {
-    router.replace('/planner');
+  if (checkingSession) {
     return null;
   }
 
