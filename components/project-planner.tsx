@@ -7,8 +7,14 @@ import { ProjectStatusBadges } from '@/components/project-status-badges';
 import { createEmptyRoadmapPlan, LFA_ROADMAP_MINIMUM_SECTIONS, LFA_ROADMAP_YEARS, normalizeRoadmapState } from '@/lib/lfa-roadmap';
 import { syncRoadmapToSheet } from '@/lib/lfa-roadmap-client';
 import { LFARoadmapState, LFARoadmapYear, LFAProject, LFAProjectCategory, LFAProjectType } from '@/lib/types';
-import { type SessionContext } from '@/lib/auth-client';
+import { type AuthenticatedUser } from '@/lib/auth-client';
 import { TeamSwitcher } from '@/components/team-switcher';
+
+type PlannerSession = {
+  user: AuthenticatedUser;
+  activeTeam: AuthenticatedUser;
+  availableTeams: AuthenticatedUser[];
+};
 
 const TYPE_LABEL: Record<LFAProjectType, string> = {
   L: 'Komplex',
@@ -28,7 +34,7 @@ type Props = {
   projects: LFAProject[];
   categories: LFAProjectCategory[];
   initialPlan: LFARoadmapState;
-  session: SessionContext;
+  session: PlannerSession;
 };
 
 export function ProjectPlanner({ projects, categories, initialPlan, session }: Props) {

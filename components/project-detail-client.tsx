@@ -6,8 +6,14 @@ import { lfaProjectCategories } from '@/data/lfa-projects';
 import { LFAProject, LFAProjectStatusUpdate } from '@/lib/types';
 import { LFA_ZAPRACOVANI_OPTIONS, syncProjectStatusToSheet } from '@/lib/lfa-project-status';
 import { ProjectStatusBadges } from '@/components/project-status-badges';
-import { type SessionContext } from '@/lib/auth-client';
+import { type AuthenticatedUser } from '@/lib/auth-client';
 import { TeamSwitcher } from '@/components/team-switcher';
+
+type DetailSession = {
+  user: AuthenticatedUser;
+  activeTeam: AuthenticatedUser;
+  availableTeams: AuthenticatedUser[];
+};
 
 const TYPE_LABEL = {
   L: 'Komplex',
@@ -33,7 +39,7 @@ function scoreLabel(score: number) {
   return 'Nižší';
 }
 
-export function ProjectDetailClient({ project, session }: { project: LFAProject; session: SessionContext }) {
+export function ProjectDetailClient({ project, session }: { project: LFAProject; session: DetailSession }) {
   const categoryMap = useMemo(
     () => Object.fromEntries(lfaProjectCategories.map((item) => [item.id, item.label])),
     []
