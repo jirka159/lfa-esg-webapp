@@ -11,7 +11,7 @@ type PlannerSession = {
     teamName: string;
     clubId: string;
     planId: string;
-    isAdmin: boolean;
+    isAdmin?: boolean;
   };
   activeTeam: {
     id: string;
@@ -20,7 +20,7 @@ type PlannerSession = {
     teamName: string;
     clubId: string;
     planId: string;
-    isAdmin: boolean;
+    isAdmin?: boolean;
   };
   availableTeams: Array<{
     id: string;
@@ -29,7 +29,7 @@ type PlannerSession = {
     teamName: string;
     clubId: string;
     planId: string;
-    isAdmin: boolean;
+    isAdmin?: boolean;
   }>;
 };
 
