@@ -420,8 +420,8 @@ export function ProjectPlanner({ projects, categories, initialPlan, session }: P
                                 data-project-id={project.id}
                               >
                                 <span className="slotProjectMeta">
-                                  <span>{project.id}</span>
-                                  <span className={`slotTypeBadge ${TYPE_CLASS[project.type]}`}>{TYPE_LABEL[project.type]}</span>
+                                  <span />
+                                  <span />
                                 </span>
                                 <strong>{project.name}</strong>
                                 <span className="slotProjectCategory">{categoryMap[project.cat]}</span>
