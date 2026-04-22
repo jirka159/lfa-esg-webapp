@@ -112,13 +112,11 @@ button, input, select { font: inherit; }
 .timelineGroupHeading { align-items: center; }
 .timelineGroupBody { display: grid; gap: 8px; align-content: start; min-height: 40px; grid-auto-rows: max-content; }
 .slotTopline { display: flex; justify-content: space-between; gap: 8px; color: var(--ink-soft); }
-.slotProjectCard, .catalogChip { display: grid; gap: 8px; width: 100%; text-align: left; border-radius: 18px; border: 1px solid var(--line); padding: 12px; background: #fff; position: relative; align-content: start; min-height: 104px; }
-.slotProjectCard { box-shadow: 0 10px 24px rgba(18,35,58,.06); }
+.slotProjectCard, .catalogChip { display: grid; gap: 8px; width: 100%; text-align: left; border-radius: 18px; border: 1px solid var(--line); padding: 12px; background: #fff; position: relative; align-content: start; min-height: 112px; }
+.slotProjectCard { box-shadow: 0 10px 24px rgba(18,35,58,.06); height: 112px; grid-template-rows: auto minmax(2.6em, auto) 1fr auto; }
 .slotProjectMeta, .catalogChipTop, .slotProjectFooter { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
 .slotProjectCategory, .catalogChip small { color: var(--ink-soft); }
 .slotProjectCard.isSelected, .catalogChip.isSelected { box-shadow: inset 0 0 0 2px rgba(29,34,65,.12), 0 12px 28px rgba(18,35,58,.08); }
-.slotProjectDetailLink { font-size: .72rem; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .08em; }
-.slotProjectDetailLink:hover { color: var(--ink); }
 .slotTypeBadge { display: inline-flex; align-items: center; border-radius: 999px; padding: 5px 9px; font-size: .64rem; text-transform: uppercase; letter-spacing: .08em; border: 1px solid transparent; }
 .slotRemove { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 999px; font-size: 1rem; cursor: pointer; background: rgba(255,255,255,.72); border: 1px solid rgba(35,52,77,.08); }
 .slotPlaceholder { color: var(--ink-soft); font-size: .88rem; padding: 10px 2px; min-height: 54px; display: flex; align-items: center; }

@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState, useTransition, type DragEvent } from 'react';
+import { useRouter } from 'next/navigation';
 import { logout } from '@/lib/auth-client';
 import { ProjectStatusBadges } from '@/components/project-status-badges';
 import { createEmptyRoadmapPlan, LFA_ROADMAP_MINIMUM_SECTIONS, LFA_ROADMAP_YEARS, normalizeRoadmapState } from '@/lib/lfa-roadmap';
@@ -47,6 +48,7 @@ type Props = {
 };
 
 export function ProjectPlanner({ projects, categories, initialPlan, session }: Props) {
+  const router = useRouter();
   const normalizedInitialPlan = useMemo(() => normalizeRoadmapState(initialPlan, projects), [initialPlan, projects]);
   const [plan, setPlan] = useState<LFARoadmapState>(normalizedInitialPlan);
   const [activeCategory, setActiveCategory] = useState<string>('all');
@@ -410,7 +412,11 @@ export function ProjectPlanner({ projects, categories, initialPlan, session }: P
                                 draggable
                                 onDragStart={(event) => handleNativeDragStart(event, project.id, 'roadmap')}
                                 onDragEnd={handleNativeDragEnd}
-                                onClick={() => setSelectedId(project.id)}
+                                onClick={() => {
+                                  setSelectedId(project.id);
+                                  rememberPlannerPosition(project.id);
+                                  router.push(`/planner/${encodeURIComponent(project.id)}`);
+                                }}
                                 data-project-id={project.id}
                               >
                                 <span className="slotProjectMeta">
@@ -420,17 +426,7 @@ export function ProjectPlanner({ projects, categories, initialPlan, session }: P
                                 <strong>{project.name}</strong>
                                 <span className="slotProjectCategory">{categoryMap[project.cat]}</span>
                                 <div className="slotProjectFooter">
-                                  <Link
-                                    href={`/planner/${encodeURIComponent(project.id)}`}
-                                    className="slotProjectDetailLink"
-                                    onPointerDown={(event) => event.stopPropagation()}
-                                    onClick={(event) => {
-                                      event.stopPropagation();
-                                      rememberPlannerPosition(project.id);
-                                    }}
-                                  >
-                                    Detail →
-                                  </Link>
+                                  <span />
                                   <span
                                     className="slotRemove"
                                     onClick={(event) => {
