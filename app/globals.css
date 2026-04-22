@@ -77,7 +77,12 @@ button, input, select { font: inherit; }
 .teamContextCard strong { font-size: 1.05rem; }
 .teamContextCard small { color: var(--ink-soft); }
 .teamContextCard.isCompact { min-width: 220px; box-shadow: none; background: var(--surface-alt); }
+.teamSwitcherCard { display: grid; gap: 10px; margin-bottom: 18px; padding: 16px 18px; border-radius: 20px; background: rgba(255,255,255,.86); border: 1px solid var(--line); box-shadow: var(--shadow); }
+.teamSwitcherCard small, .switchError { color: var(--ink-soft); margin: 0; }
+.switchError { color: #c54a4a; }
 .panelShell { border-radius: 30px; padding: 20px; }
+.timelineSection { scroll-margin-top: 20px; transition: box-shadow 160ms ease, border-color 160ms ease, transform 160ms ease; }
+.timelineSectionDropActive { border-color: rgba(54,169,90,.26); box-shadow: 0 22px 60px rgba(54,169,90,.12), inset 0 0 0 1px rgba(54,169,90,.18); }
 .sectionHeading { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; margin-bottom: 18px; }
 .sectionHeadingRoadmap { margin-bottom: 10px; }
 .sectionHeading h2 { font-size: 1.8rem; line-height: 1.05; letter-spacing: -.03em; }
@@ -157,6 +162,8 @@ button, input, select { font: inherit; }
 .checkboxField input { width: 18px; height: 18px; }
 .statusEditorActions { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-top: 18px; }
 .syncMessage { margin: 0; }
+.roadmapDropHint { margin: 10px 0 0; display: inline-flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 999px; background: rgba(54,169,90,.12); color: #1d6a36; font-weight: 700; }
+.roadmapDropHint::before { content: ''; width: 10px; height: 10px; border-radius: 999px; background: currentColor; box-shadow: 0 0 0 6px rgba(54,169,90,.12); }
 .plannerDragLayer { position: fixed; inset: 0; pointer-events: none; z-index: 50; }
 .plannerDragPreview { position: fixed; top: 0; left: 0; min-width: 260px; max-width: 320px; border-radius: 18px; border: 1px solid var(--line-strong); background: rgba(255,255,255,.96); box-shadow: 0 18px 50px rgba(18,35,58,.18); padding: 14px; display: grid; gap: 6px; }
 .plannerDragPreview span, .plannerDragPreview small { color: var(--ink-soft); }

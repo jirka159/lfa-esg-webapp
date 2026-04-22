@@ -57,6 +57,9 @@ export function ProjectPlanner({ projects, categories, initialPlan, session }: P
   const [isPending, startTransition] = useTransition();
   const restoredScrollRef = useRef(false);
   const suppressClickRef = useRef<string | null>(null);
+  const roadmapSectionRef = useRef<HTMLElement | null>(null);
+  const dragReturnScrollRef = useRef<{ top: number; projectId: string } | null>(null);
+  const dragOriginRef = useRef<'catalog' | 'roadmap' | null>(null);
 
   const categoryMap = useMemo(
     () => Object.fromEntries(categories.map((category) => [category.id, category.label])),
@@ -203,18 +206,47 @@ export function ProjectPlanner({ projects, categories, initialPlan, session }: P
     window.location.href = '/login';
   }
 
-  function handleNativeDragStart(event: DragEvent<HTMLElement>, projectId: string) {
+  function focusRoadmapDropzone() {
+    roadmapSectionRef.current?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+  }
+
+  function restoreCatalogScrollPosition() {
+    const returnState = dragReturnScrollRef.current;
+    dragReturnScrollRef.current = null;
+    if (!returnState) return;
+
+    requestAnimationFrame(() => {
+      window.scrollTo({ top: returnState.top, behavior: 'smooth' });
+      const target = document.querySelector<HTMLElement>(`[data-project-id="${CSS.escape(returnState.projectId)}"]`);
+      target?.focus?.({ preventScroll: true });
+    });
+  }
+
+  function handleNativeDragStart(event: DragEvent<HTMLElement>, projectId: string, origin: 'catalog' | 'roadmap') {
     event.dataTransfer.effectAllowed = 'move';
     event.dataTransfer.setData('text/plain', projectId);
     event.dataTransfer.setData('application/x-lfa-project-id', projectId);
     setDragProjectId(projectId);
     setSelectedId(projectId);
     suppressClickRef.current = projectId;
+    dragOriginRef.current = origin;
+
+    if (origin === 'catalog') {
+      dragReturnScrollRef.current = { top: window.scrollY, projectId };
+      focusRoadmapDropzone();
+    } else {
+      dragReturnScrollRef.current = null;
+    }
   }
 
   function handleNativeDragEnd() {
+    const shouldRestoreCatalog = dragOriginRef.current === 'catalog';
+    dragOriginRef.current = null;
     setDragProjectId(null);
     setActiveDropYear(null);
+    if (shouldRestoreCatalog) {
+      restoreCatalogScrollPosition();
+    }
   }
 
   function handleYearDragOver(event: DragEvent<HTMLElement>, year: LFARoadmapYear) {
@@ -274,7 +306,10 @@ export function ProjectPlanner({ projects, categories, initialPlan, session }: P
         availableTeams={session.availableTeams}
       />
 
-      <section className="timelineSection panelShell">
+      <section
+        className={`timelineSection panelShell ${dragOriginRef.current === 'catalog' && dragProjectId ? 'timelineSectionDropActive' : ''}`}
+        ref={roadmapSectionRef}
+      >
         <div className="sectionHeading sectionHeadingRoadmap">
           <div>
             <span className="eyebrow">Roadmapa 2026–2030</span>
@@ -283,6 +318,9 @@ export function ProjectPlanner({ projects, categories, initialPlan, session }: P
               Projekty stačí přetáhnout na sloupec roku. Každý tým pracuje se svým vlastním odděleným plánem,
               katalog projektů zůstává společný.
             </p>
+            {dragOriginRef.current === 'catalog' && dragProjectId ? (
+              <p className="roadmapDropHint">Roadmapa je aktivní – pusť projekt do sloupce vybraného roku.</p>
+            ) : null}
             {saveMessage ? <p className="syncMessage">{saveMessage}</p> : null}
           </div>
           <div className="timelineStats">
@@ -344,7 +382,7 @@ export function ProjectPlanner({ projects, categories, initialPlan, session }: P
                                 type="button"
                                 className={`slotProjectCard ${TYPE_CLASS[project.type]} ${selectedId === project.id ? 'isSelected' : ''}`}
                                 draggable
-                                onDragStart={(event) => handleNativeDragStart(event, project.id)}
+                                onDragStart={(event) => handleNativeDragStart(event, project.id, 'roadmap')}
                                 onDragEnd={handleNativeDragEnd}
                                 onClick={() => setSelectedId(project.id)}
                                 data-project-id={project.id}
@@ -463,7 +501,7 @@ export function ProjectPlanner({ projects, categories, initialPlan, session }: P
             event.preventDefault();
             return;
           }
-          handleNativeDragStart(event, project.id);
+          handleNativeDragStart(event, project.id, 'catalog');
         }}
         onDragEnd={handleNativeDragEnd}
         onClick={(event) => {
