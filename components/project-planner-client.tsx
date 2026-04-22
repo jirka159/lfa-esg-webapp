@@ -2,13 +2,42 @@
 
 import { ProjectPlanner } from '@/components/project-planner';
 import { LFARoadmapState, LFAProject, LFAProjectCategory } from '@/lib/types';
-import { type AuthSessionContext } from '@/lib/auth';
+
+type PlannerSession = {
+  user: {
+    id: string;
+    username: string;
+    displayName: string;
+    teamName: string;
+    clubId: string;
+    planId: string;
+    isAdmin: boolean;
+  };
+  activeTeam: {
+    id: string;
+    username: string;
+    displayName: string;
+    teamName: string;
+    clubId: string;
+    planId: string;
+    isAdmin: boolean;
+  };
+  availableTeams: Array<{
+    id: string;
+    username: string;
+    displayName: string;
+    teamName: string;
+    clubId: string;
+    planId: string;
+    isAdmin: boolean;
+  }>;
+};
 
 type Props = {
   projects: LFAProject[];
   categories: LFAProjectCategory[];
   initialPlan: LFARoadmapState;
-  session: AuthSessionContext;
+  session: PlannerSession;
 };
 
 export function ProjectPlannerClient({ projects, categories, initialPlan, session }: Props) {
