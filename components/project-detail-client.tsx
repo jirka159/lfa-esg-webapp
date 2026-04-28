@@ -248,12 +248,12 @@ export function ProjectDetailClient({ project, session }: { project: LFAProject;
                   </div>
                 </div>
                 <div className="guideFilesList">
-                  <div className="guideFileItem"><strong>Priloha 1</strong><span>Šablona sběru dat Scope 1 a 2</span></div>
-                  <div className="guideFileItem"><strong>Priloha 2</strong><span>Dotazník pro fanoušky</span></div>
-                  <div className="guideFileItem"><strong>Priloha 3</strong><span>Checklist koordinátora</span></div>
-                  <div className="guideFileItem"><strong>Priloha 4</strong><span>Struktura reportu</span></div>
-                  <div className="guideFileItem"><strong>Priloha 5</strong><span>Teaser pro vedení</span></div>
-                  <div className="guideFileItem"><strong>Priloha 6</strong><span>Dotazník Scope 3</span></div>
+                  <a className="guideFileItem" href="/attachments/carbon-footprint/priloha-1-sablona-sber-dat-scope-1-2.docx" download><strong>Priloha 1</strong><span>Šablona sběru dat Scope 1 a 2</span></a>
+                  <a className="guideFileItem" href="/attachments/carbon-footprint/priloha-2-dotaznik-pro-fanousky.docx" download><strong>Priloha 2</strong><span>Dotazník pro fanoušky</span></a>
+                  <a className="guideFileItem" href="/attachments/carbon-footprint/priloha-3-checklist-koordinator.docx" download><strong>Priloha 3</strong><span>Checklist koordinátora</span></a>
+                  <a className="guideFileItem" href="/attachments/carbon-footprint/priloha-4-struktura-reportu.docx" download><strong>Priloha 4</strong><span>Struktura reportu</span></a>
+                  <a className="guideFileItem" href="/attachments/carbon-footprint/priloha-5-teaser-pro-vedeni.docx" download><strong>Priloha 5</strong><span>Teaser pro vedení</span></a>
+                  <a className="guideFileItem" href="/attachments/carbon-footprint/priloha-6-dotaznik-scope-3.docx" download><strong>Priloha 6</strong><span>Dotazník Scope 3</span></a>
                 </div>
               </div>
             </>
